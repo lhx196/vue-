@@ -21,6 +21,7 @@ import {
 export function initGlobalAPI (Vue: GlobalAPI) {
   // config
   const configDef = {}
+  // 获取config方法
   configDef.get = () => config
   if (process.env.NODE_ENV !== 'production') {
     configDef.set = () => {
@@ -29,6 +30,11 @@ export function initGlobalAPI (Vue: GlobalAPI) {
       )
     }
   }
+  /**
+   * Vue有一个config的属性
+   * get负责返回当前config属性的值
+   * set禁止设置config的值，意味着不能整个config对象去替换，但可以修改config里面的值
+   */
   Object.defineProperty(Vue, 'config', configDef)
 
   // exposed util methods.

@@ -40,6 +40,7 @@ export default ({
    * Option merge strategies (used in core/util/options)
    */
   // $flow-disable-line
+  // 创建新对象 _proto_不只向Object
   optionMergeStrategies: Object.create(null),
 
   /**

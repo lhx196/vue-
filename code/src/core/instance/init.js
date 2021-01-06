@@ -11,29 +11,41 @@ import { initProvide, initInjections } from './inject'
 import { extend, mergeOptions, formatComponentName } from '../util/index'
 
 let uid = 0
-
+// 
 export function initMixin (Vue: Class<Component>) {
   Vue.prototype._init = function (options?: Object) {
+    // new Vue时调用 this指向vue实例
     const vm: Component = this
     // a uid
+    // ??? uid递增? new Vue多次 导致init多次执行?
+    // 给每个vue实例分配一个自增的uid
     vm._uid = uid++
     let startTag, endTag
-    /* istanbul ignore if */
+  /* istanbul ignore if */
+    
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+      /**
+       * performance.mark() 浏览器同坐自定义键值记录某一时刻到记录时间的描述 用于求个时间记录的时间差
+       * 用于确认初始化时间？
+       */
       startTag = `vue-perf-start:${vm._uid}`
       endTag = `vue-perf-end:${vm._uid}`
       mark(startTag)
     }
 
     // a flag to avoid this being observed
+    // ???
     vm._isVue = true
     // merge options
+    // ???暂未知_isComponent设置方式
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
       initInternalComponent(vm, options)
     } else {
+      // vm.constructor : 指向vue构造函数 
+      // 合并$option constructor构造函数属性option newVue传进来的option,实例化对象的属性合并
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
@@ -89,8 +101,13 @@ export function initInternalComponent (vm: Component, options: InternalComponent
   }
 }
 
-export function resolveConstructorOptions (Ctor: Class<Component>) {
+export function resolveConstructorOptions(Ctor: Class<Component>) {
+  // console.log(Ctor)
+  // ???暂未找到option配置写在哪里
   let options = Ctor.options
+  // console.log(options)
+  // 构造函数option
+  // 如果有父类继承的情况
   if (Ctor.super) {
     const superOptions = resolveConstructorOptions(Ctor.super)
     const cachedSuperOptions = Ctor.superOptions
@@ -110,6 +127,7 @@ export function resolveConstructorOptions (Ctor: Class<Component>) {
       }
     }
   }
+  // 返回构造函数的option
   return options
 }
 

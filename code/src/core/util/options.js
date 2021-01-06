@@ -294,6 +294,7 @@ export function validateComponentName (name: string) {
 /**
  * Ensure all props option syntax are normalized into the
  * Object-based format.
+ * 确保所有props选项语法均已标准化为基于对象的格式。
  */
 function normalizeProps (options: Object, vm: ?Component) {
   const props = options.props
@@ -393,6 +394,7 @@ export function mergeOptions (
   if (process.env.NODE_ENV !== 'production') {
     checkComponents(child)
   }
+  debugger
 
   if (typeof child === 'function') {
     child = child.options
