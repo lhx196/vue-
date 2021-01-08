@@ -6,7 +6,10 @@
     <title>Document</title>
   </head>
   <body>
-    <div id="app">{{aaa}}</div>
+    <div id="app">
+      <div>{{bbb}}</div>
+      <!-- <div>{{aaa.b}}</div> -->
+    </div>
     <!-- <div id="qqq">{{aaa}}</div> -->
   </body>
   <script src="./code/dist/vue.js"></script>
@@ -14,9 +17,23 @@
   <script>
     new Vue({
       el: "#app",
-      data: {
-          aaa:123
+      beforeCreate: function () {
+        // console.log(123)
       },
+      data: {
+        aaa: { b: 'a123' },
+        bbb: 'b123',
+      },
+      mounted(){
+        setTimeout(()=>{
+          this.bbb = '666'
+        },1000)
+      },
+      methods:{
+        a(){
+          console.log('===aaa')
+        }
+      }
     });
   </script>
 </html>

@@ -31,9 +31,11 @@ export function setActiveInstance(vm: Component) {
 
 export function initLifecycle (vm: Component) {
   const options = vm.$options
-
+  console.log('------------------initLifecycle')
+  // console.log(options)
   // locate first non-abstract parent
   let parent = options.parent
+  // parent 表示改实例化vue 与其他vue实例有父子绑定关系
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
       parent = parent.$parent
@@ -42,6 +44,7 @@ export function initLifecycle (vm: Component) {
   }
 
   vm.$parent = parent
+  // 如果有父组件 根节点取父组件
   vm.$root = parent ? parent.$root : vm
 
   vm.$children = []
@@ -333,10 +336,14 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
   }
 }
 
+
+// 
 export function callHook (vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
+  // 获取new Vue时option钩子函数
   const handlers = vm.$options[hook]
+  // console.log(handlers)
   const info = `${hook} hook`
   if (handlers) {
     for (let i = 0, j = handlers.length; i < j; i++) {

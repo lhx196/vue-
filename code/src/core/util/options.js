@@ -46,7 +46,7 @@ if (process.env.NODE_ENV !== 'production') {
 /**
  * Helper that recursively merges two data objects together.
  */
-function mergeData (to: Object, from: ?Object): Object {
+function mergeData(to: Object, from: ?Object): Object {
   if (!from) return to
   let key, toVal, fromVal
 
@@ -76,7 +76,7 @@ function mergeData (to: Object, from: ?Object): Object {
 /**
  * Data
  */
-export function mergeDataOrFn (
+export function mergeDataOrFn(
   parentVal: any,
   childVal: any,
   vm?: Component
@@ -94,14 +94,14 @@ export function mergeDataOrFn (
     // merged result of both functions... no need to
     // check if parentVal is a function here because
     // it has to be a function to pass previous merges.
-    return function mergedDataFn () {
+    return function mergedDataFn() {
       return mergeData(
         typeof childVal === 'function' ? childVal.call(this, this) : childVal,
         typeof parentVal === 'function' ? parentVal.call(this, this) : parentVal
       )
     }
   } else {
-    return function mergedInstanceDataFn () {
+    return function mergedInstanceDataFn() {
       // instance merge
       const instanceData = typeof childVal === 'function'
         ? childVal.call(vm, vm)
@@ -143,23 +143,28 @@ strats.data = function (
 /**
  * Hooks and props are merged as arrays.
  */
-function mergeHook (
+function mergeHook(
   parentVal: ?Array<Function>,
   childVal: ?Function | ?Array<Function>
 ): ?Array<Function> {
   const res = childVal
+    // 判断父生命周期
     ? parentVal
+      // 父存在，生命周期合并
       ? parentVal.concat(childVal)
+      // 判断当前子声明周期是否为函数
       : Array.isArray(childVal)
         ? childVal
+        // 声明周期塞到函数内部
         : [childVal]
     : parentVal
   return res
+    // 去重
     ? dedupeHooks(res)
     : res
 }
 
-function dedupeHooks (hooks) {
+function dedupeHooks(hooks) {
   const res = []
   for (let i = 0; i < hooks.length; i++) {
     if (res.indexOf(hooks[i]) === -1) {
@@ -169,6 +174,9 @@ function dedupeHooks (hooks) {
   return res
 }
 
+// 生命周期函数 全部塞到数组中
+
+//["beforeCreate","created","beforeMount","mounted","beforeUpdate","updated","beforeDestroy","destroyed","activated","deactivated","errorCaptured","serverPrefetch"]
 LIFECYCLE_HOOKS.forEach(hook => {
   strats[hook] = mergeHook
 })
@@ -180,7 +188,7 @@ LIFECYCLE_HOOKS.forEach(hook => {
  * a three-way merge between constructor options, instance
  * options and parent options.
  */
-function mergeAssets (
+function mergeAssets(
   parentVal: ?Object,
   childVal: ?Object,
   vm?: Component,
@@ -239,23 +247,23 @@ strats.watch = function (
  * Other object hashes.
  */
 strats.props =
-strats.methods =
-strats.inject =
-strats.computed = function (
-  parentVal: ?Object,
-  childVal: ?Object,
-  vm?: Component,
-  key: string
-): ?Object {
-  if (childVal && process.env.NODE_ENV !== 'production') {
-    assertObjectType(key, childVal, vm)
+  strats.methods =
+  strats.inject =
+  strats.computed = function (
+    parentVal: ?Object,
+    childVal: ?Object,
+    vm?: Component,
+    key: string
+  ): ?Object {
+    if (childVal && process.env.NODE_ENV !== 'production') {
+      assertObjectType(key, childVal, vm)
+    }
+    if (!parentVal) return childVal
+    const ret = Object.create(null)
+    extend(ret, parentVal)
+    if (childVal) extend(ret, childVal)
+    return ret
   }
-  if (!parentVal) return childVal
-  const ret = Object.create(null)
-  extend(ret, parentVal)
-  if (childVal) extend(ret, childVal)
-  return ret
-}
 strats.provide = mergeDataOrFn
 
 /**
@@ -270,13 +278,13 @@ const defaultStrat = function (parentVal: any, childVal: any): any {
 /**
  * Validate component names
  */
-function checkComponents (options: Object) {
+function checkComponents(options: Object) {
   for (const key in options.components) {
     validateComponentName(key)
   }
 }
 
-export function validateComponentName (name: string) {
+export function validateComponentName(name: string) {
   if (!new RegExp(`^[a-zA-Z][\\-\\.0-9_${unicodeRegExp.source}]*$`).test(name)) {
     warn(
       'Invalid component name: "' + name + '". Component names ' +
@@ -296,7 +304,7 @@ export function validateComponentName (name: string) {
  * Object-based format.
  * 确保所有props选项语法均已标准化为基于对象的格式。
  */
-function normalizeProps (options: Object, vm: ?Component) {
+function normalizeProps(options: Object, vm: ?Component) {
   const props = options.props
   if (!props) return
   const res = {}
@@ -333,7 +341,7 @@ function normalizeProps (options: Object, vm: ?Component) {
 /**
  * Normalize all injections into Object-based format
  */
-function normalizeInject (options: Object, vm: ?Component) {
+function normalizeInject(options: Object, vm: ?Component) {
   const inject = options.inject
   if (!inject) return
   const normalized = options.inject = {}
@@ -360,7 +368,7 @@ function normalizeInject (options: Object, vm: ?Component) {
 /**
  * Normalize raw function directives into object format.
  */
-function normalizeDirectives (options: Object) {
+function normalizeDirectives(options: Object) {
   const dirs = options.directives
   if (dirs) {
     for (const key in dirs) {
@@ -372,7 +380,7 @@ function normalizeDirectives (options: Object) {
   }
 }
 
-function assertObjectType (name: string, value: any, vm: ?Component) {
+function assertObjectType(name: string, value: any, vm: ?Component) {
   if (!isPlainObject(value)) {
     warn(
       `Invalid value for option "${name}": expected an Object, ` +
@@ -386,7 +394,7 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
  * Merge two option objects into a new one.
  * Core utility used in both instantiation and inheritance.
  */
-export function mergeOptions (
+export function mergeOptions(
   parent: Object,
   child: Object,
   vm?: Component
@@ -394,12 +402,11 @@ export function mergeOptions (
   if (process.env.NODE_ENV !== 'production') {
     checkComponents(child)
   }
-  debugger
-
   if (typeof child === 'function') {
     child = child.options
   }
 
+  // 判定options 配置项内是否有props inject directives属性
   normalizeProps(child, vm)
   normalizeInject(child, vm)
   normalizeDirectives(child)
@@ -418,18 +425,23 @@ export function mergeOptions (
       }
     }
   }
-
   const options = {}
   let key
   for (key in parent) {
+    // 遍历Vue注入全局option  实例化是覆盖默认Vue option配置
+    // 最后把属性添加到options中
     mergeField(key)
   }
   for (key in child) {
+    // hasOwn hasOwnProperty child的属性是否为parant的自由属性 而不是parent的原型链上
+    // 最后把属性添加到options中
     if (!hasOwn(parent, key)) {
       mergeField(key)
     }
   }
-  function mergeField (key) {
+  function mergeField(key) {
+    // 合并属性
+    // defaultStrat :当child[key]为空时，采用parent[key] 否则 覆盖parent[key]
     const strat = strats[key] || defaultStrat
     options[key] = strat(parent[key], child[key], vm, key)
   }
@@ -441,7 +453,7 @@ export function mergeOptions (
  * This function is used because child instances need access
  * to assets defined in its ancestor chain.
  */
-export function resolveAsset (
+export function resolveAsset(
   options: Object,
   type: string,
   id: string,

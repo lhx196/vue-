@@ -12,7 +12,8 @@ import { extend, mergeOptions, formatComponentName } from '../util/index'
 
 let uid = 0
 // 
-export function initMixin (Vue: Class<Component>) {
+export function initMixin(Vue: Class<Component>) {
+  // new Vue 实际上就是_init方法执行
   Vue.prototype._init = function (options?: Object) {
     // new Vue时调用 this指向vue实例
     const vm: Component = this
@@ -36,7 +37,9 @@ export function initMixin (Vue: Class<Component>) {
     // a flag to avoid this being observed
     // ???
     vm._isVue = true
+
     // merge options
+
     // ???暂未知_isComponent设置方式
     if (options && options._isComponent) {
       // optimize internal component instantiation
@@ -44,29 +47,58 @@ export function initMixin (Vue: Class<Component>) {
       // internal component options needs special treatment.
       initInternalComponent(vm, options)
     } else {
+
       // vm.constructor : 指向vue构造函数 
       // 合并$option constructor构造函数属性option newVue传进来的option,实例化对象的属性合并
+      //  Vue 构造函数的 options 和用户传入的 options 做一层合并，到 vm.$options 上
       vm.$options = mergeOptions(
+        // 返回function Vue .option属性 ???猜错是全局注入Vue时加了option配置项
         resolveConstructorOptions(vm.constructor),
         options || {},
         vm
       )
+      // console.log(vm.$options )
     }
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
+      // ???生产环境下接入代码覆盖率工具
       initProxy(vm)
     } else {
       vm._renderProxy = vm
     }
     // expose real self
     vm._self = vm
+    /**
+     * initLifecycle 初始化 watch 当前组件状态等参数
+     *  vm._watcher = null
+        vm._inactive = null
+        vm._directInactive = false
+        vm._isMounted = false
+        vm._isDestroyed = false
+        vm._isBeingDestroyed = false
+     */
     initLifecycle(vm)
+    /**
+     * vm创建_event对象
+     * vm._events = Object.create(null)
+       vm._hasHookEvent = false
+     */
     initEvents(vm)
+    /**
+     * 初始化render渲染函数
+     *   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
+     *  vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
+     */
     initRender(vm)
+    // 执行beforeCreate钩子函数
     callHook(vm, 'beforeCreate')
     initInjections(vm) // resolve injections before data/props
+    /**
+     * 初始化 props、methods、data、computed、watch
+     */
     initState(vm)
     initProvide(vm) // resolve provide after data/props
+    // 执行created钩子函数
     callHook(vm, 'created')
 
     /* istanbul ignore if */

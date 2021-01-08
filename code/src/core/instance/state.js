@@ -45,12 +45,14 @@ export function proxy (target: Object, sourceKey: string, key: string) {
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
-export function initState (vm: Component) {
+export function initState(vm: Component) {
   vm._watchers = []
   const opts = vm.$options
   if (opts.props) initProps(vm, opts.props)
+  // 把methods挂载到vue实例上
   if (opts.methods) initMethods(vm, opts.methods)
   if (opts.data) {
+    // data 内所有属性 修改为响应式属性 通过defineReactive添加访问器属性
     initData(vm)
   } else {
     observe(vm._data = {}, true /* asRootData */)
@@ -111,9 +113,11 @@ function initProps (vm: Component, propsOptions: Object) {
 
 function initData (vm: Component) {
   let data = vm.$options.data
+  // 组件data为函数
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
+  // 判断是否为Object
   if (!isPlainObject(data)) {
     data = {}
     process.env.NODE_ENV !== 'production' && warn(
@@ -129,6 +133,7 @@ function initData (vm: Component) {
   let i = keys.length
   while (i--) {
     const key = keys[i]
+    // data属性警告与methods重复
     if (process.env.NODE_ENV !== 'production') {
       if (methods && hasOwn(methods, key)) {
         warn(
@@ -137,6 +142,7 @@ function initData (vm: Component) {
         )
       }
     }
+     // data属性警告与props重复
     if (props && hasOwn(props, key)) {
       process.env.NODE_ENV !== 'production' && warn(
         `The data property "${key}" is already declared as a prop. ` +
@@ -147,7 +153,14 @@ function initData (vm: Component) {
       proxy(vm, `_data`, key)
     }
   }
-  // observe data
+  /**
+   *  observe data
+      为data构建Observer类
+      new Oserver(data)
+      new Oserver 过程中执行walk函数 此时遍历 data:{}中的属性 依次执行defineReactive
+      defineReactive 函数作用在于给属性添加访问器属性 修改为响应式
+      defineReactive 内部会对该设置属性作判定，如果是对象的，则会为该对象new Oberver作递归并为当前属性对象添加get set(因为对象整体替换也需要监听修改模板)，如果不是对象，那直接添加get set方法
+  */
   observe(data, true /* asRootData */)
 }
 

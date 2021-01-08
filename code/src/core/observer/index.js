@@ -39,7 +39,7 @@ export class Observer {
   dep: Dep;
   vmCount: number; // number of vms that have this object as root $data
 
-  constructor (value: any) {
+  constructor(value: any) {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
@@ -107,7 +107,7 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
-export function observe (value: any, asRootData: ?boolean): Observer | void {
+export function observe(value: any, asRootData: ?boolean): Observer | void {
   if (!isObject(value) || value instanceof VNode) {
     return
   }
@@ -131,6 +131,8 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 
 /**
  * Define a reactive property on an Object.
+ * 将数据处理成响应式数据Object.defineProperty 设置set get
+ * 在获取的时候 订阅dep 修改的时候发布dep 通知dep sub内的watch更新视图
  */
 export function defineReactive (
   obj: Object,
@@ -139,20 +141,24 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  // console.log(arguments)
   const dep = new Dep()
-
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
   }
 
   // cater for pre-defined getter/setters
+  // console.log(property)
+  
   const getter = property && property.get
   const setter = property && property.set
+
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-
+  console.log(val)
+  // 如果监听的属性是对象
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
@@ -161,6 +167,7 @@ export function defineReactive (
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
         dep.depend()
+        // 如果监听的属性是对象
         if (childOb) {
           childOb.dep.depend()
           if (Array.isArray(value)) {

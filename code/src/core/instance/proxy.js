@@ -35,6 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
   }
 
   const hasProxy =
+    // isNative 判断是浏览器是否存在全局函数
     typeof Proxy !== 'undefined' && isNative(Proxy)
 
   if (hasProxy) {
