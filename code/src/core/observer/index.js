@@ -108,10 +108,13 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * or the existing observer if the value already has one.
  */
 export function observe(value: any, asRootData: ?boolean): Observer | void {
+  // 不是对象时直接返回，后续会在defineReactive中直接设置访问器属性
+  // 是对象时就会往下执行new Obeserver 遍历内部属性 为每个属性设置访问器属性
   if (!isObject(value) || value instanceof VNode) {
     return
   }
   let ob: Observer | void
+  // __ob__存在意味着已经设置过访问器属性
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__
   } else if (
@@ -157,14 +160,16 @@ export function defineReactive (
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
-  console.log(val)
-  // 如果监听的属性是对象
+
+  // 如果监听的属性是对象递归
   let childOb = !shallow && observe(val)
+  // 不管是引用类型还是基础类型 都需要设置访问器属性
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
+      // ???Dep.target赋值时间
       if (Dep.target) {
         dep.depend()
         // 如果监听的属性是对象

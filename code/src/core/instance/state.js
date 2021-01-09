@@ -57,7 +57,9 @@ export function initState(vm: Component) {
   } else {
     observe(vm._data = {}, true /* asRootData */)
   }
+  // 初始化computed即生成getter，随即new Watcher
   if (opts.computed) initComputed(vm, opts.computed)
+  // watch绑定到vm实例$watch上
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch)
   }
@@ -187,6 +189,8 @@ function initComputed (vm: Component, computed: Object) {
 
   for (const key in computed) {
     const userDef = computed[key]
+    // 判断computed 内属是否未函数形式还是{get:function(){},set:function(){}}形式
+    // 赋值getter
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
       warn(
