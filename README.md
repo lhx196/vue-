@@ -12,6 +12,18 @@ code：源码仓库
         ├── sfc             # .vue 文件解析
         ├── shared          # 共享代码
 ```
+入口文件
+```javascript
+// 在script config中有打包入口
+'web-full-dev': {
+    entry: resolve('web/entry-runtime-with-compiler.js'),
+    dest: resolve('dist/vue.js'),
+    format: 'umd',
+    env: 'development',
+    alias: { he: './entity-decoder' },
+    banner
+  },
+```
 ## 初始化时生命周期
  - 合并option(mergeOptions合并Vue构造函数的option 与 new Vue过程中option配置项)
  - initLifecycle 初始化生命周期函数

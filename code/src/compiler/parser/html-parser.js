@@ -56,28 +56,44 @@ export function parseHTML (html, options) {
   const expectHTML = options.expectHTML
   const isUnaryTag = options.isUnaryTag || no
   const canBeLeftOpenTag = options.canBeLeftOpenTag || no
+
   let index = 0
+  /**
+   * last :html完整文本
+   */
   let last, lastTag
+  console.log(html)
+  // debugger
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
+    // 确保不在脚本/样式之类的纯文本内容元素中
     if (!lastTag || !isPlainTextElement(lastTag)) {
       let textEnd = html.indexOf('<')
+      // textEnd === 0时 为根目录标签
       if (textEnd === 0) {
         // Comment:
+        // <!-- -->注释处理
+        // const comment = /^<!\--/
+        // 判断当前template开头是否为<!--
         if (comment.test(html)) {
           const commentEnd = html.indexOf('-->')
 
           if (commentEnd >= 0) {
+            // 保留注释处理
             if (options.shouldKeepComment) {
+               // 若保留注释，则把注释截取出来传给options.comment，创建注释类型的AST节点
               options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3)
             }
+            // 使html截取注释后面的部分
+            // '<!-- dsfsdf -->' 当运行到此处时，字符串开头已经是<!-- 因此只需要把游标在结束点后设置三位
             advance(commentEnd + 3)
             continue
           }
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
+        // <！[endif]> 清除条件注释
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf(']>')
 
@@ -93,8 +109,8 @@ export function parseHTML (html, options) {
           advance(doctypeMatch[0].length)
           continue
         }
-
         // End tag:
+        // 判断字符串开头 为结束标签
         const endTagMatch = html.match(endTag)
         if (endTagMatch) {
           const curIndex = index
@@ -178,23 +194,44 @@ export function parseHTML (html, options) {
 
   // Clean up any remaining tags
   parseEndTag()
-
+  // advance函数是用来移动解析游标的，解析完一部分就把游标向后移动一部分，确保不会重复解析
   function advance (n) {
     index += n
     html = html.substring(n)
   }
 
-  function parseStartTag () {
+  function parseStartTag() {
+    // console.log(startTagOpen)
     const start = html.match(startTagOpen)
+    // console.log(start)
     if (start) {
+      /**
+       * start: ['<div','div',groups:undefined,index:0,input]
+       * match:
+          tagName:标签名称
+          attrs:属性
+          start：属性，事件、自定义属性等 value="valuetext" 类型与等号赋值的接口 头部标记的位置
+          end:s 上述字段字符串尾部的标识符，通过adcance移动标记位后， index（即当前模板字符串解析到的位置）为尾部标识位置
+       */
       const match = {
         tagName: start[1],
         attrs: [],
         start: index
       }
       advance(start[0].length)
+ 
       let end, attr
+      // 当模板字符串匹配不为结束标签时进入循环
+      // 每次循环将匹配一个事件绑定、属性、自定义属性等，如下方注释所示
       while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
+        /**
+         * attrs 每次循环的值
+          [" id=\"app\"","id","=","app",null,null]
+          [" value=\"valuetext\"","value","=","valuetext",null,null]
+          [" data-num=\"numbertext\"","data-num","=","numbertext",null,null]
+          [" @click=\"FunA\"","@click","=","FunA",null,null]
+         */
+        // console.log(JSON.stringify(attr))
         attr.start = index
         advance(attr[0].length)
         attr.end = index

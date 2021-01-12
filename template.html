@@ -7,16 +7,19 @@
   </head>
   <body>
     <div id="app">
-      <div>{{bbb}}</div>
-      <!-- <div>{{aaa.b}}</div> -->
+      <div value="valuetext" data-num="numbertext" @click="FunA">{{bbb}}</div>
+      <!-- 123 -->
+      <div>
+        text1<span>text2</span>
+      </div>
     </div>
-    <!-- <div id="qqq">{{aaa}}</div> -->
   </body>
   <script src="./code/dist/vue.js"></script>
   <!-- <script src="./code/src/core/index.js"></script> -->
   <script>
     new Vue({
       el: "#app",
+      // template:'<h1>123</h1>',
       beforeCreate: function () {
         // console.log(123)
       },
@@ -30,10 +33,21 @@
         },1000)
       },
       methods:{
-        a(){
+        FunA(){
           console.log('===aaa')
         }
       }
     });
+  </script>
+  <script>
+    // console.log('===========================')
+    // var b = `asdasdas123as123dgfdg`
+    // var a = /1/
+    // console.log(b)
+    // console.log(a)
+    // var c = b.match(a)
+    // c.start = 1
+    // console.log(Array.isArray(c))
+    // console.log(c)
   </script>
 </html>

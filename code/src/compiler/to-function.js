@@ -47,8 +47,9 @@ export function createCompileToFunctionFn (compile: Function): Function {
         }
       }
     }
-
+ 
     // check cache
+    // delimiters 改变{{}}插入值的形式
     const key = options.delimiters
       ? String(options.delimiters) + template
       : template

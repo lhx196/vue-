@@ -87,7 +87,7 @@ export function parse (
   platformGetTagNamespace = options.getTagNamespace || no
   const isReservedTag = options.isReservedTag || no
   maybeComponent = (el: ASTElement) => !!el.component || !isReservedTag(el.tag)
-
+  // pluckModuleFunction: 从 加载的模块 数组中，将同名的方法抽取出来，放到一个新数组中返回。
   transforms = pluckModuleFunction(options.modules, 'transformNode')
   preTransforms = pluckModuleFunction(options.modules, 'preTransformNode')
   postTransforms = pluckModuleFunction(options.modules, 'postTransformNode')
@@ -153,6 +153,7 @@ export function parse (
 
     // final children cleanup
     // filter out scoped slots
+    // 过滤 slot标签
     element.children = element.children.filter(c => !(c: any).slotScope)
     // remove trailing whitespace node again
     trimEndingWhitespace(element)
