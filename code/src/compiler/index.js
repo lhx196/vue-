@@ -14,7 +14,6 @@ export const createCompiler = createCompilerCreator(function baseCompile (
 ): CompiledResult {
   // trim()去除模板字符串template头尾空格
   const ast = parse(template.trim(), options)
-  console.log(ast)
   if (options.optimize !== false) {
     optimize(ast, options)
   }

@@ -67,6 +67,7 @@ export function parseHTML(html, options) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
     // 确保不在脚本/样式之类的纯文本内容元素中
+    // 确保即将 parse 的内容不是在纯文本标签里 (script,style,textarea)
     if (!lastTag || !isPlainTextElement(lastTag)) {
       let textEnd = html.indexOf('<')
       /**
@@ -79,7 +80,7 @@ export function parseHTML(html, options) {
        * 需要一一去匹配尝试
        */
       if (textEnd === 0) {
-        console.log('end0')
+        // console.log('end0')
         // Comment:
         // <!-- -->注释处理
         // const comment = /^<!\--/
@@ -148,8 +149,9 @@ export function parseHTML(html, options) {
       // 如果html字符串不是以'<'开头,说明'<'前面的都是纯文本，无需处理
       // 那就把'<'以后的内容拿出来赋给rest
       if (textEnd >= 0) {
-
         rest = html.slice(textEnd)
+        // console.log(rest)
+        // console.log(html)
 
         while (
           // 不为结束标签
@@ -162,9 +164,14 @@ export function parseHTML(html, options) {
           !conditionalComment.test(rest)
         ) {
           // < in plain text, be forgiving and treat it as text
+          // 在'<'之后查找是否还有'<'
+          // 从rest第一个字符串后开始检索
           next = rest.indexOf('<', 1)
+           // 如果没有了，表示'<'后面也是文本
           if (next < 0) break
+          // 如果还有，表示'<'是文本中的一个字符
           textEnd += next
+          // 那就把next之后的内容截出来继续下一轮循环匹配
           rest = html.slice(textEnd)
         }
         text = html.substring(0, textEnd)
@@ -172,6 +179,7 @@ export function parseHTML(html, options) {
 
       // 如果在html字符串中没有找到'<'，表示这一段html字符串都是纯文本
       if (textEnd < 0) {
+        
         text = html
       }
 
@@ -286,6 +294,7 @@ export function parseHTML(html, options) {
     }
   }
 
+  // 处理开始标签 如事件绑定 属性绑定
   function handleStartTag(match) {
     // 开始标签的标签名
     const tagName = match.tagName

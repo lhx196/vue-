@@ -21,10 +21,12 @@ export function parseText (
   text: string,
   delimiters?: [string, string]
 ): TextParseResult | void {
+  // {{}} 语法正则匹配
   const tagRE = delimiters ? buildRegex(delimiters) : defaultTagRE
   if (!tagRE.test(text)) {
     return
   }
+
   const tokens = []
   const rawTokens = []
   let lastIndex = tagRE.lastIndex = 0

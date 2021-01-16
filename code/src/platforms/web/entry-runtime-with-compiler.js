@@ -7,10 +7,6 @@ import Vue from './runtime/index'
 import { query } from './util/index'
 import { compileToFunctions } from './compiler/index'
 import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
-// import { a } from './a.js'
-// console.log(444)
-// debugger
-// console.log(a)
 
 const idToTemplate = cached(id => {
   const el = query(id)
@@ -62,6 +58,7 @@ Vue.prototype.$mount = function (
     } else if (el) {
       template = getOuterHTML(el)
     }
+    // console.log(template)
     if (template) {
       /* istanbul ignore if */
       if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -85,7 +82,6 @@ Vue.prototype.$mount = function (
       }
     }
   }
-  console.log(el)
   return mount.call(this, el, hydrating)
 }
 
