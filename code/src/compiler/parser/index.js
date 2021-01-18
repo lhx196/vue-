@@ -113,7 +113,8 @@ export function parse(
   }
 
   function closeElement(element) {
-    console.log(element)
+    
+    // 去除文本节点末尾空格
     trimEndingWhitespace(element)
     if (!inVPre && !element.processed) {
       element = processElement(element, options)
@@ -286,9 +287,20 @@ export function parse(
       } else if (!element.processed) {
         // structural directives
         // 处理指令 v-for v-if等
+        /**
+         * 对标签ast做以下处理：
+         * 对标签节点，attrsMap依次做判断，判断 if for once是否含有
+         * 对v-for v-if v-once 从attrsList移除
+         * 给ast节点添加 el.if el.for el.once属性
+         * if 再额外添加ifcondition
+         * for 再额外执行parseFor
+         */
         processFor(element)
+        // console.log(element)
         processIf(element)
+        // console.log(element)
         processOnce(element)
+        console.log(element)
       }
       // 第一次执行start为根节点
       /**

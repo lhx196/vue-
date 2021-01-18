@@ -7,13 +7,17 @@
   </head>
   <body>
     <div id="app">
-      <div value="valuetext" data-num="numbertext" @click="FunA" open>{{bbb}}</div>
+      <div value="valuetext" data-num="numbertext" @click="FunA" open>
+        {{bbb}}
+      </div>
       <div>
         text1
         <span>text2</span>
       </div>
+      <div v-if="true">
+        <input v-once="true" />
+      </div>
     </div>
-    <input />
   </body>
   <script src="./code/dist/vue.js"></script>
   <!-- <script src="./code/src/core/index.js"></script> -->
@@ -25,19 +29,19 @@
         // console.log(123)
       },
       data: {
-        aaa: { b: 'a123' },
-        bbb: 'b123',
+        aaa: { b: "a123" },
+        bbb: "b123",
       },
-      mounted(){
-        setTimeout(()=>{
-          this.bbb = '666'
-        },1000)
+      mounted() {
+        setTimeout(() => {
+          this.bbb = "666";
+        }, 1000);
       },
-      methods:{
-        FunA(){
-          console.log('===aaa')
-        }
-      }
+      methods: {
+        FunA() {
+          console.log("===aaa");
+        },
+      },
     });
   </script>
   <script>

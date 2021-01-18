@@ -186,10 +186,12 @@ export function getAndRemoveAttr (
   removeFromMap?: boolean
 ): ?string {
   let val
+  // attrsMap:{'v-if':true}
   if ((val = el.attrsMap[name]) != null) {
     const list = el.attrsList
     for (let i = 0, l = list.length; i < l; i++) {
       if (list[i].name === name) {
+        // console.log(list)
         list.splice(i, 1)
         break
       }
