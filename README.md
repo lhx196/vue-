@@ -157,7 +157,6 @@ parse实际的执行过程主要是围绕parseHtml这个api去执行<br>
 parsehtml实际执行是循环遍历html模板字符串，通过advance api来记录循环过程中模板字符串下标，确保不重复处理已经读取过的部分，在循环过程中有一下判断:<br>
 1、确保即将 parse 的内容不是在纯文本标签里 (script,style,textarea)<BR>
 2、匹配当前剩余模板字符串(每次匹配过后都会通过advance api进行截取，避免重复处理)，按照下方情况去判断<BR>
-
 以\<为第一个字符串处理方法:
 - \<!-- 、\<!DOCTYPE html> 、条件注释:\<!-- [if !IE] -->等开头分别进行处理去处理
 
@@ -169,6 +168,30 @@ parsehtml实际执行是循环遍历html模板字符串，通过advance api来�
 - <前的所以字符串为文本，若后续还有<字符串，则判断是否为开头、结束标签之类的，如排除后，确定<为文本中的一个字符
 
 当不以<开头，则为文本字符串处理。<br>
+3、根据上述判断方式去执行对应的钩子函数，开始标签 -- options.starts，结束标签 -- options.end，文本标签执行chars
+```text
+钩子很函数的执行过程
+  start：
+    1、通过createASTElement(tag, attrs, currentParent)方法将标签转化成ast对象，tag：标签名，attrs：属性、事件绑定及指令，currentParent：当前父元素的AST对象(后续提及)
+    2、processPre、processFor、processIf、processOnce分别处理pre if once for指令。对标签ast做以下处理：
+         * 对标签节点，attrsMap依次做判断，判断 if for once是否含有
+         * 对v-for v-if v-once 从attrsList移除
+         * 给ast节点添加 el.if el.for el.once属性
+         * if 再额外添加ifcondition
+         * for 再额外执行parseFor
+    3、判断是否单标签：
+         * 如果是单标签，则直接执行closeElement(后续分析)
+         * 如果不是，则入栈
+  end:
+    1、出栈，执行如果是单标签，则直接执行closeElement
+  chars:
+    1、判断是否为空字符串
+    2、将text文本转换成ast语法对象，塞入父元素children中，并新增其中的{{}}语法舒心标记expression、token
+```
+```text
+closeElement:
+
+```
 
 
 

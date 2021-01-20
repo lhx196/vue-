@@ -42,6 +42,13 @@ const whitespaceRE = /\s+/g
 
 const invalidAttributeRE = /[\s"'<>\/=]/
 
+/**
+ * ƒ decode (html) {
+      decoder = decoder || document.createElement('div');
+      decoder.innerHTML = html;
+      return decoder.textContent
+    }
+ */
 const decodeHTMLCached = cached(he.decode)
 
 export const emptySlotScopeToken = `_empty_`
@@ -113,12 +120,13 @@ export function parse(
   }
 
   function closeElement(element) {
-    
+
     // 去除文本节点末尾空格
     trimEndingWhitespace(element)
     if (!inVPre && !element.processed) {
       element = processElement(element, options)
     }
+
     // tree management
     if (!stack.length && element !== root) {
       // allow root elements with v-if, v-else-if and v-else
@@ -228,6 +236,7 @@ export function parse(
       }
       // 将tag, attrs, unary, start, end转为ast语法树
       // console.log('-------currentParent',currentParent)
+      // console.log(tag, attrs, currentParent)
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
       // console.log(element)
       if (ns) {
@@ -273,6 +282,7 @@ export function parse(
         element = preTransforms[i](element, options) || element
       }
 
+      // 判断标签中是否含有v-pre指令
       if (!inVPre) {
         processPre(element)
         if (element.pre) {
@@ -300,7 +310,7 @@ export function parse(
         processIf(element)
         // console.log(element)
         processOnce(element)
-        console.log(element)
+        // console.log(element)
       }
       // 第一次执行start为根节点
       /**
@@ -312,6 +322,7 @@ export function parse(
        并且把当前的 AST 元素赋值给 currentParent。
        stack 和 currentParent 除了在处理开始标签的时候会变化，在处理闭合标签的时候也会变化，因此整个 AST 树管理要结合闭合标签的处理逻辑看。
        */
+      // 判断是否跟节点，根节点不存在直接赋值，当第一次遍历时为根节点直接触发
       if (!root) {
         root = element
         if (process.env.NODE_ENV !== 'production') {
@@ -340,6 +351,7 @@ export function parse(
     },
     // 解析文本
     chars(text: string, start: number, end: number) {
+      // console.log(text)
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
           if (text === template) {
@@ -366,10 +378,24 @@ export function parse(
       }
       // 获取当前父节点下的所有子ast
       const children = currentParent.children
+      // debugger
+      // console.log(text.trim())
+      // console.log(!!text.trim())
+      /**
+       * trim()判断该文字节点是否为空字符串，空字符串经过trim()后转布尔为false
+       */
       if (inPre || text.trim()) {
+        // 判断父标签是否为script 和 style
+        // 处理非空字符串
+        /**
+         * decodeHTMLCached : cache(he.decode) 闭包缓存
+         * key 为 text 字符串内容，value为he.decode的返回值 -- 创建div标签，然后赋值innerhtml 在返回dom的textContent
+         * 此时text 为文本
+         */
         text = isTextTag(currentParent) ? text : decodeHTMLCached(text)
       } else if (!children.length) {
         // remove the whitespace-only node right after an opening tag
+        // 处理空字符串
         text = ''
       } else if (whitespaceOption) {
         if (whitespaceOption === 'condense') {
@@ -389,7 +415,12 @@ export function parse(
         }
         let res
         let child: ?ASTNode
+        // 将text文本转换成ast对象，塞入到children中
         // 匹配{{}}语法，如果有{{}}模板替换则新增expression token
+        /**
+         * expression:""\n        "+_s(bbb)+"\n      "" --替换字符串
+         *  token：[@括号前的内容，括号中的替换的对象Object类型,@括号后的内容]
+         */
         if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) {
           child = {
             type: 2,
@@ -464,6 +495,7 @@ export function processElement(
   element: ASTElement,
   options: CompilerOptions
 ) {
+  // 获取标签上的key属性，并赋值到element.key上
   processKey(element)
 
   // determine whether this is a plain element after
@@ -474,8 +506,11 @@ export function processElement(
     !element.attrsList.length
   )
 
+  // 获取标签上的ref属性，并赋值到element.ref上
   processRef(element)
+  // 处理slot属性逻辑
   processSlotContent(element)
+  // 处理<slot>标签
   processSlotOutlet(element)
   processComponent(element)
   for (let i = 0; i < transforms.length; i++) {
@@ -564,6 +599,7 @@ export function parseFor(exp: string): ?ForParseResult {
 function processIf(el) {
   const exp = getAndRemoveAttr(el, 'v-if')
   if (exp) {
+    console.log(exp)
     el.if = exp
     addIfCondition(el, {
       exp: exp,
