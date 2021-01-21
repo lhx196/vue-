@@ -118,18 +118,19 @@ export function parse(
       warn(msg, range)
     }
   }
-
+  // 关闭标签
   function closeElement(element) {
 
-    // 去除文本节点末尾空格
+    // 去除节点 children 末尾的空格文本节点
     trimEndingWhitespace(element)
     if (!inVPre && !element.processed) {
+      // 处理元素标签
       element = processElement(element, options)
     }
-
     // tree management
     if (!stack.length && element !== root) {
       // allow root elements with v-if, v-else-if and v-else
+      // 允许根元素含有v-if 等指令
       if (root.if && (element.elseif || element.else)) {
         if (process.env.NODE_ENV !== 'production') {
           checkRootConstraints(element)
@@ -512,11 +513,25 @@ export function processElement(
   processSlotContent(element)
   // 处理<slot>标签
   processSlotOutlet(element)
+  /**
+   * 判断属性是否含有inline-template、is
+   * is -- 对应添加ast中componet
+   * inline-template -- 对应添加ast中inlineTemplate
+   */
+
   processComponent(element)
   for (let i = 0; i < transforms.length; i++) {
     element = transforms[i](element, options) || element
   }
+  /**
+   * 对于ast attributes处理(v-on/@) 
+   * 利用onRE与dirRE来捕获事件
+   * 在对标签属性的处理过程中，判断如果是指令，首先通过 parseModifiers 解析出修饰符，然后判断如果事件的指令，则执行 addHandler(el, name, value, modifiers, false, warn)
+   * addHandler 函数看起来长，实际上就做了 3 件事情，首先根据 modifier 修饰符对事件名 name 做处理，接着根据 modifier.native 判断是一个纯原生事件还是普通事件，分别对应 el.nativeEvents 和 el.events，最后按照 name 对事件做归类，并把回调函数的字符串保留到对应的事件中。
+   */
+
   processAttrs(element)
+
   return element
 }
 
@@ -599,7 +614,6 @@ export function parseFor(exp: string): ?ForParseResult {
 function processIf(el) {
   const exp = getAndRemoveAttr(el, 'v-if')
   if (exp) {
-    console.log(exp)
     el.if = exp
     addIfCondition(el, {
       exp: exp,

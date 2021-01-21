@@ -15,6 +15,7 @@ export const createCompiler = createCompilerCreator(function baseCompile (
   // trim()去除模板字符串template头尾空格
   const ast = parse(template.trim(), options)
   if (options.optimize !== false) {
+    // 优化AST语法树
     optimize(ast, options)
   }
   const code = generate(ast, options)

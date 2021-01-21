@@ -23,6 +23,7 @@ export function optimize (root: ?ASTElement, options: CompilerOptions) {
   isStaticKey = genStaticKeysCached(options.staticKeys || '')
   isPlatformReservedTag = options.isReservedTag || no
   // first pass: mark all non-static nodes.
+  console.log(root)
   markStatic(root)
   // second pass: mark static roots.
   markStaticRoots(root, false)
@@ -35,8 +36,10 @@ function genStaticKeys (keys: string): Function {
   )
 }
 
-function markStatic (node: ASTNode) {
+function markStatic(node: ASTNode) {
+  // console.log(node)
   node.static = isStatic(node)
+  // console.log(isStatic(node))
   if (node.type === 1) {
     // do not make component slot content static. this avoids
     // 1. components not able to mutate slot nodes
@@ -50,11 +53,15 @@ function markStatic (node: ASTNode) {
     }
     for (let i = 0, l = node.children.length; i < l; i++) {
       const child = node.children[i]
+      // 如果这个节点是一个普通元素，则遍历它的所有 children，递归执行 markStatic
       markStatic(child)
       if (!child.static) {
         node.static = false
       }
     }
+    // 如果节点的 ifConditions 不为空，则遍历 ifConditions 拿到所有条件中的 block，
+    // 也就是它们对应的 AST 节点，递归执行 markStatic。在这些递归过程中，一旦子节点有不是 static 的情况，
+    // 则它的父节点的 static 均变成 false。
     if (node.ifConditions) {
       for (let i = 1, l = node.ifConditions.length; i < l; i++) {
         const block = node.ifConditions[i].block
@@ -97,7 +104,15 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
   }
 }
 
-function isStatic (node: ASTNode): boolean {
+/**
+ * type 为 3是文本属于静态节点
+ * 2 为表达式
+ * 如果有 pre 属性，那么它使用了 v-pre 指令，是静态
+ * 没有使用 v-if、v-for
+ * 没有使用其它指令（不包括 v-once）
+ * 非内置组件，是平台保留的标签，非带有 v-for 的 template 标签的直接子节点，节点的所有属性的 key 都满足静态 key
+ */
+function isStatic(node: ASTNode): boolean {
   if (node.type === 2) { // expression
     return false
   }

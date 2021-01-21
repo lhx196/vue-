@@ -97,7 +97,6 @@ export function createCompilerCreator(baseCompile: Function): Function {
       if (process.env.NODE_ENV !== 'production') {
         detectErrors(compiled.ast, warn)
       }
-      console.log(compiled)
       compiled.errors = errors
       compiled.tips = tips
       return compiled

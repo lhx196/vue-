@@ -150,9 +150,14 @@ Vue.prototype.$mount = function (
 实际上 compileToFunctions 相当于是一个含有baseCompile闭包的函数,通过调用baseCompile 生成compile(即ast、render、staticRenderFns集合)<br>
 
 ### baseCompile 过程
-baseCompile其实主要分为两个过程:parse、generate
+baseCompile其实主要分为两个过程:parse、optimize、generate
+- parse主要作用是将模板字符串转化为只有一个根节点的ast语法对象
+- optimize主要作用是优化ast语法树：markStatic(root) 标记静态节点 ，markStaticRoots(root, false) 标记静态根。
+```text
+Vue 是数据驱动，是响应式的，但是我们的模板并不是所有数据都是响应式的，也有很多数据是首次渲染后就永远不会变化的，那么这部分数据生成的 DOM 也不会变化，我们可以在 patch 的过程跳过对他们的比对。
+```
 
-### parse
+### parse(模板字符串转化为ast语法对象)
 parse实际的执行过程主要是围绕parseHtml这个api去执行<br>
 parsehtml实际执行是循环遍历html模板字符串，通过advance api来记录循环过程中模板字符串下标，确保不重复处理已经读取过的部分，在循环过程中有一下判断:<br>
 1、确保即将 parse 的内容不是在纯文本标签里 (script,style,textarea)<BR>
@@ -190,6 +195,21 @@ parsehtml实际执行是循环遍历html模板字符串，通过advance api来�
 ```
 ```text
 closeElement:
+  1、通过trimEndingWhitespace 去除节点 children 末尾的空格文本节点
+  2、processElement处理元素标签：
+    - processKey：获取标签上的key属性，并赋值到element.key上
+    - processRef：获取标签上的ref属性，并赋值到element.ref上
+    - processSlotContent：处理slot属性逻辑
+    - processSlotOutlet：处理<slot>标签
+    - processComponent：
+       * 判断属性是否含有inline-template、is
+       * is -- 对应添加ast中componet
+       * inline-template -- 对应添加ast中inlineTemplate
+    - processAttrs：
+       * 对于ast attributes处理(v-on/@) 
+       * 利用onRE与dirRE来捕获事件
+       * 在对标签属性的处理过程中，判断如果是指令，首先通过 parseModifiers 解析出修饰符，然后判断如果事件的指令，则执行 addHandler(el, name, value, modifiers, false, warn)
+       * addHandler 函数看起来长，实际上就做了 3 件事情，首先根据 modifier 修饰符对事件名 name 做处理，接着根据 modifier.native 判断是一个纯原生事件还是普通事件，分别对应 el.nativeEvents 和 el.events，最后按照 name 对事件做归类，并把回调函数的字符串保留到对应的事件中。
 
 ```
 
