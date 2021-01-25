@@ -48,16 +48,16 @@ code：源码仓库
   ): Component {
     el = el && inBrowser ? query(el) : undefined
     return mountComponent(this, el, hydrating)
-}
+  }
   ```
   回到entry-runtime-with-compiler.js文件， 在vue引入后，此时的vue中$mount过载了一个返回值是mountComponent调用的高阶函数<br>
   
   ```javascript
   const mount = Vue.prototype.$mount
-Vue.prototype.$mount = function (
+  Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
-): Component {
+  ): Component {
   // el 通过传入的options 获取el的dom节点
   el = el && query(el)
 
@@ -121,8 +121,8 @@ Vue.prototype.$mount = function (
       }
     }
   }
-  return mount.call(this, el, hydrating)
-}
+    return mount.call(this, el, hydrating)
+  }
   ```
   此时把之前挂载的mountComponent调用的高阶函数先存储到mount中，在重新挂载$monut，在新$mount执行的最后，去调用mount<br>
   这样的写法，个人目前觉得目的是可以做到模块化，因为mountComponent中含有数据观察者Wacher类的创建，这是属于vue响应式原理的核心代码部分，因此这部分放到core目录下中比较合适
@@ -155,6 +155,35 @@ baseCompile其实主要分为两个过程:parse、optimize、generate
 - optimize主要作用是优化ast语法树：markStatic(root) 标记静态节点 ，markStaticRoots(root, false) 标记静态根。
 ```text
 Vue 是数据驱动，是响应式的，但是我们的模板并不是所有数据都是响应式的，也有很多数据是首次渲染后就永远不会变化的，那么这部分数据生成的 DOM 也不会变化，我们可以在 patch 的过程跳过对他们的比对。
+
+isStatic 是对一个 AST 元素节点是否是静态的判断，如果是表达式，就是非静态；如果是纯文本，就是静态；对于一个普通元素，如果有 pre 属性，那么它使用了 v-pre 指令，是静态，否则要同时满足以下条件：没有使用 v-if、v-for，没有使用其它指令（不包括 v-once），非内置组件，是平台保留的标签，非带有 v-for 的 template 标签的直接子节点，节点的所有属性的 key 都满足静态 key；这些都满足则这个 AST 节点是一个静态节点。
+
+如果这个节点是一个普通元素，则遍历它的所有 children，递归执行 markStatic。因为所有的 elseif 和 else 节点都不在 children 中， 如果节点的 ifConditions 不为空，则遍历 ifConditions 拿到所有条件中的 block，也就是它们对应的 AST 节点，递归执行 markStatic。在这些递归过程中，一旦子节点有不是 static 的情况，则它的父节点的 static 均变成 false。
+
+markStaticRoots 在上述标记静态节点后，再做一层筛选，剔除只有一个子元素，并且该子元素是纯文本的情况，如:<div>123</div>(目的可能是只有一个纯文本的子元素节点维护成本过高，因此需要剔除)，并左上标记staticRoot；后续在渲染过程中也会用到staticRoot，而staic只是在生成staticRoot过程中衍生出的中间属性，
+```
+- generate
+```javascript
+// 常用简称
+vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
+
+export function installRenderHelpers (target: any) {
+  target._o = markOnce
+  target._n = toNumber
+  target._s = toString
+  target._l = renderList
+  target._t = renderSlot
+  target._q = looseEqual
+  target._i = looseIndexOf
+  target._m = renderStatic
+  target._f = resolveFilter
+  target._k = checkKeyCodes
+  target._b = bindObjectProps
+  target._v = createTextVNode
+  target._e = createEmptyVNode
+  target._u = resolveScopedSlots
+  target._g = bindObjectListeners
+}
 ```
 
 ### parse(模板字符串转化为ast语法对象)
@@ -210,7 +239,6 @@ closeElement:
        * 利用onRE与dirRE来捕获事件
        * 在对标签属性的处理过程中，判断如果是指令，首先通过 parseModifiers 解析出修饰符，然后判断如果事件的指令，则执行 addHandler(el, name, value, modifiers, false, warn)
        * addHandler 函数看起来长，实际上就做了 3 件事情，首先根据 modifier 修饰符对事件名 name 做处理，接着根据 modifier.native 判断是一个纯原生事件还是普通事件，分别对应 el.nativeEvents 和 el.events，最后按照 name 对事件做归类，并把回调函数的字符串保留到对应的事件中。
-
 ```
 
 

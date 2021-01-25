@@ -23,7 +23,6 @@ export function optimize (root: ?ASTElement, options: CompilerOptions) {
   isStaticKey = genStaticKeysCached(options.staticKeys || '')
   isPlatformReservedTag = options.isReservedTag || no
   // first pass: mark all non-static nodes.
-  console.log(root)
   markStatic(root)
   // second pass: mark static roots.
   markStaticRoots(root, false)
@@ -51,6 +50,7 @@ function markStatic(node: ASTNode) {
     ) {
       return
     }
+     // 遍历所有孩子，如果孩子 不是静态节点，那么父亲也不是静态节点
     for (let i = 0, l = node.children.length; i < l; i++) {
       const child = node.children[i]
       // 如果这个节点是一个普通元素，则遍历它的所有 children，递归执行 markStatic
@@ -75,6 +75,7 @@ function markStatic(node: ASTNode) {
 }
 
 function markStaticRoots (node: ASTNode, isInFor: boolean) {
+
   if (node.type === 1) {
     if (node.static || node.once) {
       node.staticInFor = isInFor
@@ -82,6 +83,7 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
     // For a node to qualify as a static root, it should have children that
     // are not just static text. Otherwise the cost of hoisting out will
     // outweigh the benefits and it's better off to just always render it fresh.
+    // 剔除只有一个文本元素的节点
     if (node.static && node.children.length && !(
       node.children.length === 1 &&
       node.children[0].type === 3
@@ -111,9 +113,15 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
  * 没有使用 v-if、v-for
  * 没有使用其它指令（不包括 v-once）
  * 非内置组件，是平台保留的标签，非带有 v-for 的 template 标签的直接子节点，节点的所有属性的 key 都满足静态 key
+ * 
+    type取值	对应的AST节点类型
+    1	元素节点
+    2	包含变量的动态文本节点
+    3	不包含变量的纯文本节点
  */
 function isStatic(node: ASTNode): boolean {
-  if (node.type === 2) { // expression
+  // 表达式 {{}}
+  if (node.type === 2) { // expression eg:{{}}
     return false
   }
   if (node.type === 3) { // text

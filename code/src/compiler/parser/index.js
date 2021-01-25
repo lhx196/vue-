@@ -146,7 +146,7 @@ export function parse(
           `use v-else-if to chain them instead.`,
           { start: element.start }
         )
-      }
+      } 
     }
     if (currentParent && !element.forbidden) {
       if (element.elseif || element.else) {

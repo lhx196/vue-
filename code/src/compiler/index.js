@@ -14,10 +14,12 @@ export const createCompiler = createCompilerCreator(function baseCompile (
 ): CompiledResult {
   // trim()去除模板字符串template头尾空格
   const ast = parse(template.trim(), options)
+
+  // 从根节点往下遍历，为每个节点打上是否为静态节点的标记
   if (options.optimize !== false) {
     // 优化AST语法树
     optimize(ast, options)
-  }
+  }  
   const code = generate(ast, options)
   return {
     ast,
