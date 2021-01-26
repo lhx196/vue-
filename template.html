@@ -14,9 +14,12 @@
         text1
         <span>text2</span>
       </div>
-      <div v-if="true">
-        <input v-once="true" />
+      <div v-for="(a,b) in arr">for</div>
+      <!-- <div v-if="bool == 3">
+        <input />
       </div>
+      <div v-else-if="bool == 2">elseif</div>
+      <div v-else>else</div> -->
     </div>
   </body>
   <script src="./code/dist/vue.js"></script>
@@ -31,6 +34,8 @@
       data: {
         aaa: { b: "a123" },
         bbb: "b123",
+        bool:2,
+        arr:[1,2,3,4]
       },
       mounted() {
         setTimeout(() => {

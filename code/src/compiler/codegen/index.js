@@ -25,7 +25,10 @@ export class CodegenState {
     this.options = options
     this.warn = options.warn || baseWarn
     this.transforms = pluckModuleFunction(options.modules, 'transformCode')
+    // web/modules/index中定义多个genData函数 入class style处理的genData
+    // console.log(options.modules)
     this.dataGenFns = pluckModuleFunction(options.modules, 'genData')
+    // console.log(this.dataGenFns)
     this.directives = extend(extend({}, baseDirectives), options.directives)
     const isReservedTag = options.isReservedTag || no
     this.maybeComponent = (el: ASTElement) => !!el.component || !isReservedTag(el.tag)
@@ -47,6 +50,7 @@ export function generate (
   const state = new CodegenState(options)
   // 判断ast是否为空 不为空则根据ast创建VNode 否则创建一个div VNode
   const code = ast ? genElement(ast, state) : '_c("div")'
+  // generate 函数首先通过 genElement(ast, state) 生成 code，再把 code 用 with(this){return ${code}}} 包裹起来。
   return {
     render: `with(this){return ${code}}`,
     staticRenderFns: state.staticRenderFns
@@ -71,6 +75,7 @@ export function genElement (el: ASTElement, state: CodegenState): string {
   } else if (el.tag === 'slot') {
     return genSlot(el, state)
   } else {
+    // 最终生成子节点的逻辑，if for 在经过上方函数修改标记ifProcessed，forProcessed后最终还是会走向此处
     // component or element
     let code
     if (el.component) {
@@ -80,9 +85,9 @@ export function genElement (el: ASTElement, state: CodegenState): string {
       if (!el.plain || (el.pre && state.maybeComponent(el))) {
         // ast生成render字符串
         // vue.js:11534 {attrs:{"value":"valuetext","data-num":"numbertext"},on:{"click":FunA}}
+        // genData 函数就是根据 AST 元素节点的属性构造出一个 data 对象字符串，这个在后面创建 VNode 的时候的时候会作为参数传入。
         data = genData(el, state)
       }
-
       const children = el.inlineTemplate ? null : genChildren(el, state, true)
       code = `_c('${el.tag}'${
         data ? `,${data}` : '' // data
@@ -151,7 +156,10 @@ export function genIf (
   altGen?: Function,
   altEmpty?: string
 ): string {
+  // 标记ifProcessed 执行genElement是就不会再次进入genIf
   el.ifProcessed = true // avoid recursion
+  // console.log(el.ifConditions)
+  // 浅拷贝
   return genIfConditions(el.ifConditions.slice(), state, altGen, altEmpty)
 }
 
@@ -161,15 +169,19 @@ function genIfConditions (
   altGen?: Function,
   altEmpty?: string
 ): string {
+  // 如果conditions长度为0 复制创建空标签函数
   if (!conditions.length) {
     return altEmpty || '_e()'
   }
-
   const condition = conditions.shift()
+  // exp - 控制if展示的data变量 else中为undefined
+  // 如果有 exp 则调用genTernaryExp
   if (condition.exp) {
+    // vue.js:11409 (bool == 2)?_c('div',[_v("elseif")]):_c('div',[_v("else")])
+    // vue.js:11409 (bool == 3)?_c('div',[_c('input')]):(bool == 2)?_c('div',[_v("elseif")]):_e()
     return `(${condition.exp})?${
       genTernaryExp(condition.block)
-    }:${
+      }:${
       genIfConditions(conditions, state, altGen, altEmpty)
     }`
   } else {
@@ -177,7 +189,10 @@ function genIfConditions (
   }
 
   // v-if with v-once should generate code like (a)?_m(0):_m(1)
-  function genTernaryExp (el) {
+  // return (isShow) ? genElement(el, state) : _e()
+  function genTernaryExp(el) {
+    // console.log(genElement(el, state))
+    // _c('div',[_c('input')])
     return altGen
       ? altGen(el, state)
       : el.once
@@ -192,6 +207,12 @@ export function genFor (
   altGen?: Function,
   altHelper?: string
 ): string {
+  // console.log(el)
+  //  <div v-for="(a,b) in arr">for</div>
+  // exp for: "arr"
+  // alias "a"
+  // iterator1 "b"
+  // 处理for上ast的标记属性
   const exp = el.for
   const alias = el.alias
   const iterator1 = el.iterator1 ? `,${el.iterator1}` : ''
@@ -213,6 +234,9 @@ export function genFor (
   }
 
   el.forProcessed = true // avoid recursion
+  // console.log(genElement(el, state))
+  // 外面嵌套一层 _l renderlist
+  // vue.js:11463 _c('div',[_v("for")])
   return `${altHelper || '_l'}((${exp}),` +
     `function(${alias}${iterator1}${iterator2}){` +
       `return ${(altGen || genElement)(el, state)}` +
@@ -247,6 +271,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
     data += `tag:"${el.tag}",`
   }
   // module data generation functions
+  // web/module中 定义的不同模块下的genData 在new CodegenState生成实例state中有整合
   for (let i = 0; i < state.dataGenFns.length; i++) {
     data += state.dataGenFns[i](el)
   }
@@ -307,6 +332,7 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (el.wrapListeners) {
     data = el.wrapListeners(data)
   }
+  // console.log(data)
   return data
 }
 
