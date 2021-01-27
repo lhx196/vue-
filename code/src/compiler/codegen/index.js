@@ -51,6 +51,8 @@ export function generate (
   // 判断ast是否为空 不为空则根据ast创建VNode 否则创建一个div VNode
   const code = ast ? genElement(ast, state) : '_c("div")'
   // generate 函数首先通过 genElement(ast, state) 生成 code，再把 code 用 with(this){return ${code}}} 包裹起来。
+  // console.log(code)
+  // console.log(state.staticRenderFns)
   return {
     render: `with(this){return ${code}}`,
     staticRenderFns: state.staticRenderFns
@@ -88,6 +90,7 @@ export function genElement (el: ASTElement, state: CodegenState): string {
         // genData 函数就是根据 AST 元素节点的属性构造出一个 data 对象字符串，这个在后面创建 VNode 的时候的时候会作为参数传入。
         data = genData(el, state)
       }
+      // genChildren 如果chidren存在则会返回一个字符串数组去嵌套
       const children = el.inlineTemplate ? null : genChildren(el, state, true)
       code = `_c('${el.tag}'${
         data ? `,${data}` : '' // data
@@ -95,6 +98,12 @@ export function genElement (el: ASTElement, state: CodegenState): string {
         children ? `,${children}` : '' // children
       })`
     }
+    // console.log(code)
+    // 最终生成
+    // for
+    // _c('div',{attrs:{"id":"app"}},[_c('div',{attrs:{"value":"valuetext","data-num":"numbertext"},on:{"click":FunA}},[_v("\n        "+_s(bbb)+"，"+_s(bbb)+"\n      ")]),_v(" "),_m(0),_v(" "),_l((arr),function(a,b){return _c('div',[_v("for")])})],2)
+    // if
+    // _c('div',{attrs:{"id":"app"}},[_c('div',{attrs:{"value":"valuetext","data-num":"numbertext"},on:{"click":FunA}},[_v("\n        "+_s(bbb)+"，"+_s(bbb)+"\n      ")]),_v(" "),_m(0),_v(" "),(bool == 3)?_c('div',[_c('input')]):(bool == 2)?_c('div',[_v("elseif")]):_c('div',[_v("else")])])
     // module transforms
     for (let i = 0; i < state.transforms.length; i++) {
       code = state.transforms[i](el, code)
@@ -515,6 +524,9 @@ export function genChildren (
       ? getNormalizationType(children, state.maybeComponent)
       : 0
     const gen = altGenNode || genNode
+    // gen
+    // 如果是文本节点执行getText执行target.toString
+    // 如果是标签节点执行genElement执行继续进行递归
     return `[${children.map(c => gen(c, state)).join(',')}]${
       normalizationType ? `,${normalizationType}` : ''
     }`
@@ -558,6 +570,7 @@ function genNode (node: ASTNode, state: CodegenState): string {
   } else if (node.type === 3 && node.isComment) {
     return genComment(node)
   } else {
+    // target._s = toString
     return genText(node)
   }
 }

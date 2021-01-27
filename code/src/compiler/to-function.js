@@ -57,7 +57,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
       return cache[key]
     }
 
-    // compile
+    // 此处就是ast转换 opt优化 gen生成可执行字符串过程
     const compiled = compile(template, options)
 
     // check compilation errors/tips
@@ -91,6 +91,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     // turn code into functions
     const res = {}
     const fnGenErrors = []
+    // 将可执行的代码字符串生成 function
     res.render = createFunction(compiled.render, fnGenErrors)
     res.staticRenderFns = compiled.staticRenderFns.map(code => {
       return createFunction(code, fnGenErrors)
@@ -109,7 +110,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
         )
       }
     }
-
+    // 若无添加delimiters key此时为templat模板字符串
     return (cache[key] = res)
   }
 }

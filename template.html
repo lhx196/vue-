@@ -14,7 +14,7 @@
         text1
         <span>text2</span>
       </div>
-      <div v-for="(a,b) in arr">for</div>
+      <!-- <div v-for="(a,b) in arr">for</div> -->
       <!-- <div v-if="bool == 3">
         <input />
       </div>
@@ -34,8 +34,8 @@
       data: {
         aaa: { b: "a123" },
         bbb: "b123",
-        bool:2,
-        arr:[1,2,3,4]
+        bool: 2,
+        arr: [1, 2, 3, 4],
       },
       mounted() {
         setTimeout(() => {
@@ -51,5 +51,11 @@
   </script>
   <script>
     // console.log('===========================')
+    // var a = { b: 123 };
+    // (function () {
+    //   with (a) {
+    //     return `${b}`;
+    //   }
+    // })();
   </script>
 </html>

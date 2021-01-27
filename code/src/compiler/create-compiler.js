@@ -4,12 +4,15 @@ import { extend } from 'shared/util'
 import { detectErrors } from './error-detector'
 import { createCompileToFunctionFn } from './to-function'
 
+// baseCompile为当前文件夹下index里面createCompiler
 export function createCompilerCreator(baseCompile: Function): Function {
+  // 重写createCompiler
   return function createCompiler(baseOptions: CompilerOptions) {
     function compile(
       template: string,
       options?: CompilerOptions
     ): CompiledResult {
+      // baseoption 各个模块的基础配置，如style class 在genData时用到的方法等
       const finalOptions = Object.create(baseOptions)
       const errors = []
       const tips = []

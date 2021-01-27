@@ -141,17 +141,23 @@ code：源码仓库
         comments: options.comments
       }, this)
   ```
+  render - ast渲染函数；staticRenderFns - 静态跟节点渲染函数数组集合<br>
+  此时this.$options上已经挂载了render、staticRenderFns
 
 ### compileToFunctions
 ```javascript
   // src/complier/createCompiler
+  // 此处的createCompiler是经过重写的：原函数为baseCompile 经过多次重写
+  // 在重写compileToFunctions过程中添加了delimiters属性的判断，若果没有则已key为template模板字符串存储render及staticRenderFns
   const { compile, compileToFunctions } = createCompiler(baseOptions)
 ```
 实际上 compileToFunctions 相当于是一个含有baseCompile闭包的函数,通过调用baseCompile 生成compile(即ast、render、staticRenderFns集合)<br>
 
-### baseCompile 过程
+compile:ast - ast语法树对象,render - ast转换后的可执行代码字符串，staticRenderFns - 静态根可执行代码字符串数组集合<br>
+
+### baseCompile 过程(此处是未经重写前的createCompiler)
 baseCompile其实主要分为两个过程:parse、optimize、generate
-- parse主要作用是将模板字符串转化为只有一个根节点的ast语法对象:<br>
+- 一、parse主要作用是将模板字符串转化为只有一个根节点的ast语法对象:<br>
 parse实际的执行过程主要是围绕parseHtml这个api去执行<br>
 parsehtml实际执行是循环遍历html模板字符串，通过advance api来记录循环过程中模板字符串下标，确保不重复处理已经读取过的部分，在循环过程中有一下判断:<br>
 1、确保即将 parse 的内容不是在纯文本标签里 (script,style,textarea)<BR>
@@ -206,7 +212,7 @@ closeElement:
        * addHandler 函数看起来长，实际上就做了 3 件事情，首先根据 modifier 修饰符对事件名 name 做处理，接着根据 modifier.native 判断是一个纯原生事件还是普通事件，分别对应 el.nativeEvents 和 el.events，最后按照 name 对事件做归类，并把回调函数的字符串保留到对应的事件中。
 ```
 
-- optimize主要作用是优化ast语法树：markStatic(root) 标记静态节点 ，markStaticRoots(root, false) 标记静态根。
+- 二、optimize主要作用是优化ast语法树：markStatic(root) 标记静态节点 ，markStaticRoots(root, false) 标记静态根。
 ```text
 Vue 是数据驱动，是响应式的，但是我们的模板并不是所有数据都是响应式的，也有很多数据是首次渲染后就永远不会变化的，那么这部分数据生成的 DOM 也不会变化，我们可以在 patch 的过程跳过对他们的比对。
 
@@ -216,9 +222,10 @@ isStatic 是对一个 AST 元素节点是否是静态的判断，如果是表达
 
 markStaticRoots 在上述标记静态节点后，再做一层筛选，剔除只有一个子元素，并且该子元素是纯文本的情况，如:<div>123</div>(目的可能是只有一个纯文本的子元素节点维护成本过高，因此需要剔除)，并左上标记staticRoot；后续在渲染过程中也会用到staticRoot，而staic只是在生成staticRoot过程中衍生出的中间属性，
 ```
-- generate
+- 三、generate
+主要过程包括 genElement(ast, state) 生成 code，再把 code 用 with(this){return ${code}}} 包裹起来。
 ```javascript
-// 常用简称
+// 常用简称目录
 vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
 
 export function installRenderHelpers (target: any) {
@@ -239,7 +246,57 @@ export function installRenderHelpers (target: any) {
   target._g = bindObjectListeners
 }
 ```
+- new CodegenState(options)生成state实例:其中收集module对应的配置，在后续genData过程中，对于ast 标签属性生成 字符串对象中运用的到，如:<BR>
+  在生成class和style时
+  ```text
+  获取所有 modules 中的 genData 函数，其中，class module 和 style module 定义了 genData 函数。比如定义在 src/platforms/web/compiler/modules/class.js 中的 genData 方法：
+  function genData (el: ASTElement): string {
+  let data = ''
+  if (el.staticClass) {
+    data += `staticClass:${el.staticClass},`
+  }
+  if (el.classBinding) {
+    data += `class:${el.classBinding},`
+  }
+    return data
+  }
+  在初始化CodegenState过程中，会手机起来，放到state实例dataGenFns上
+  export class CodegenState {
+  constructor (options: CompilerOptions) {
+    // ...
+    this.dataGenFns = pluckModuleFunction(options.modules, 'genData')
+    // ...
+    }
+  }
 
+  在后续genElement过程中 执行当前genData 实际上就是执行各个模块收集过来处理ast上属性的方法，如 事件就会 变成on:{}这样的字符串方式
+  class、style就如下方展示
+  {
+    staticClass: "list",
+    class: bindCls
+  }
+  ```
+- genElement，通过ast生成可执行的代码字符串，常用函数简称目录如上方所示<br>
+
+首次进入为根元素，在没有其他自定义属性的情况下会直接跳过多次判断，走到else代码块中<br>
+else代码块主要逻辑包括:<br>
+1、genData：收集标签上的属性及事件<br>
+2、genChildren，如果有子元素就开始进行递归，递归逻辑后续提到<br>
+3、最终生成  `_c('${el.tag},${data} ,${children}` 这样形式的函数调用字符串，其中children为数组，子元素也与这个模板一直<br>
+
+- 在genElement过程中如果标签含有if for等会执行对应的方法genIf，genFor，在处理过后最终还会继续调用genElement方法(因为genElement最终只有else内才会生成元素生成函数调用的字符串_c()等形式)，同时为该ast属性打上ifProcessed等标记位，目的是为了最终生成成元素时，跳过if for的处理，避免进入死循环，下方只展示if 跟 for的逻辑
+```text
+  genIf:
+  1、通过genIfConditions，需循环ast中ifconditions数组，每次遍历会把第一个删除，直到数组为空
+  2、然后通过对 condition.exp 去生成一段三元运算符的代码，: 后是递归调用 genIfConditions，这样如果有多个 conditions，就生成多层三元运算逻辑。这里我们暂时不考虑 v-once 的情况，所以 genTernaryExp 最终是调用了 genElement。
+
+  genFor:
+  genFor 的逻辑很简单，首先 AST 元素节点中获取了和 for 相关的一些属性，然后返回了一个代码字符串。
+  生成代码字符串可以看code源码，源码内有阅读注释
+
+  staticRoot：
+  在上述optimize过程中，会把静态根节点标记出来，此时，该方法就会把静态根ast转化成可执行函数后再存到state.staticRenderFns的数组中
+```
 ### genIf 
 - 标记ifProcessed 执行genElement是就不会再次进入genIf
 - genIf 主要是通过执行 genIfConditions，它是依次从 ifconditions 获取第一个 condition
@@ -252,6 +309,13 @@ export function installRenderHelpers (target: any) {
 - 例子如：_l((arr), function(a, b) {
   return genElememt(el, state)
 })
+
+- 处理过后的子元素会形成数组，塞到上方第3点位置，形成嵌套
+
+- 最终生成code文本，会套在`with(this){return ${code}}`模板上<br>
+with的作用在于，在后面执行函数code的时候，可以直接读取this里面的属性，而不需要通过this.的方法获取，with语法可看额外补充.md
+
+-最后generate过程返回2个属性render：即为ast语法树转换后的可执行函数字符串，staticRenderFns为静态根可执行的渲染函数集合数组
 
 
 ## observer模块
