@@ -23,7 +23,18 @@ code：源码仓库
     alias: { he: './entity-decoder' },
     banner
   },
+
+// VUE核心代码是经过下方处理的
+initMixin(Vue)
+stateMixin(Vue)
+eventsMixin(Vue)
+lifecycleMixin(Vue)
+renderMixin(Vue)
 ```
+## web/entry-runtime-with-compiler.js
+  1、import Vue from './runtime/index'，引入Vue构造函数，Vue构造函数在runtime文件中复制了$mount，runtime中import Vue from 'core/index'表示vue核心代码再core/index中<br>
+  2、entry-runtime-with-compiler中会把runtime的赋值的$mount抽离出来，并在原先$mount执行前添加两步逻辑，一是根据dom操作或者模板字符串，二是用模板字符串获取渲染函数render及静态跟渲染函数数组(此时的渲染函数已经经过new Function生成anonymous function(匿名函数),下方会提及生成过程)<br>
+
 ## 初始化init 过程
  - 合并option(mergeOptions合并Vue构造函数的option 与 new Vue过程中option配置项)
  - initLifecycle 初始化生命周期函数
@@ -42,6 +53,7 @@ code：源码仓库
   在入口文件处执行import Vue from './runtime/index'<br>
   在runtime index中，赋值一个执行mountComponent高阶函数（mountComponent后续会提到执行过程）
   ```javascript
+  // runtime/index
   Vue.prototype.$mount = function (
     el?: string | Element,
     hydrating?: boolean
@@ -50,9 +62,9 @@ code：源码仓库
     return mountComponent(this, el, hydrating)
   }
   ```
-  回到entry-runtime-with-compiler.js文件， 在vue引入后，此时的vue中$mount过载了一个返回值是mountComponent调用的高阶函数<br>
-  
+  在 entry-runtime-with-compiler 中mountComponent执行前添加了两步逻辑,下方会详细提及<br>
   ```javascript
+  // entry-runtime-with-compiler
   const mount = Vue.prototype.$mount
   Vue.prototype.$mount = function (
   el?: string | Element,
@@ -142,7 +154,8 @@ code：源码仓库
       }, this)
   ```
   render - ast渲染函数；staticRenderFns - 静态跟节点渲染函数数组集合<br>
-  此时this.$options上已经挂载了render、staticRenderFns
+  此时this.$options上已经挂载了render、staticRenderFns<br>
+  执行mountComponent逻辑<br>
 
 ### compileToFunctions
 ```javascript
@@ -317,6 +330,8 @@ with的作用在于，在后面执行函数code的时候，可以直接读取thi
 
 -最后generate过程返回2个属性render：即为ast语法树转换后的可执行函数字符串，staticRenderFns为静态根可执行的渲染函数集合数组
 
+## mountComponent
+- 1、callHook(vm, 'beforeMount') beforeMount钩子函数触发
 
 ## observer模块
 

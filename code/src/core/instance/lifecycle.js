@@ -60,6 +60,7 @@ export function initLifecycle (vm: Component) {
 
 export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
+    // console.log(vnode)
     const vm: Component = this
     const prevEl = vm.$el
     const prevVnode = vm._vnode
@@ -140,13 +141,14 @@ export function lifecycleMixin (Vue: Class<Component>) {
     }
   }
 }
-
+// $mount逻辑
 export function mountComponent (
   vm: Component,
   el: ?Element,
   hydrating?: boolean
 ): Component {
   vm.$el = el
+  // 判断外层compileToFunctions有没有生成render函数，如果没有则把render函数赋值为创建空元素
   if (!vm.$options.render) {
     vm.$options.render = createEmptyVNode
     if (process.env.NODE_ENV !== 'production') {
@@ -189,11 +191,12 @@ export function mountComponent (
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
+    // vm._render()得到一份最新的VNode节点树，
+    // 然后执行vm._update()方法对最新的VNode节点树与上一次渲染的旧VNode节点树进行对比并更新DOM节点(即patch操作) ，完成一次渲染。
     updateComponent = () => {
       vm._update(vm._render(), hydrating)
     }
   }
-
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined

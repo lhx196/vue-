@@ -5182,7 +5182,7 @@ function initMixin (Vue) {
         vm
       );
     }
-    /* istanbul ignore else */
+  /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
       initProxy(vm);
     } else {

@@ -12,7 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
     'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
     'require' // for Webpack/Browserify
   )
-
+    console.log(allowedGlobals)
   const warnNonPresent = (target, key) => {
     warn(
       `Property or method "${key}" is not defined on the instance but ` +
@@ -66,6 +66,12 @@ if (process.env.NODE_ENV !== 'production') {
     }
   }
 
+  // getHandler方法主要是针对读取代理对象的某个属性时进行的操作。
+  // 渲染函数会从vm._renderProxy对象上读取所需要的数据，一般来说他指向的是实例对象，也就是说直接从实例对象上读取数据用于渲染。
+  // 但在开发环境，且支持Proxy的情况下，程序会给这个操作增加一层校验：渲染所需数据不存在时报警。
+  // 当访问的属性不是string类型或者属性值在被代理的对象上不存在，则抛出错误提示，否则就返回该属性值。
+  // 该方法可以在开发者错误的调用vm属性时，提供提示作用。
+
   const getHandler = {
     get (target, key) {
       if (typeof key === 'string' && !(key in target)) {
@@ -76,7 +82,11 @@ if (process.env.NODE_ENV !== 'production') {
     }
   }
 
-  initProxy = function initProxy (vm) {
+  // 校验render函数是否引用了vm上不存在数据或非特许的数据
+// 校验自定义的快捷键名是否和Vue内置的快捷键修饰符重名
+
+  initProxy = function initProxy(vm) {
+    // 判断是否支持Proxy
     if (hasProxy) {
       // determine which proxy handler to use
       const options = vm.$options

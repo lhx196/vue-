@@ -59,9 +59,10 @@ export function initMixin(Vue: Class<Component>) {
       )
       // console.log(vm.$options )
     }
-    /* istanbul ignore else */
+    console.log(123)
+    console.log(vm.$data)
+     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
-      // ???生产环境下接入代码覆盖率工具
       initProxy(vm)
     } else {
       vm._renderProxy = vm

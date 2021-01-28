@@ -15,9 +15,11 @@ function Vue(options) {
 }
 
 // Vue prototypoe 扩展方法
+// 扩展init方法
 initMixin(Vue)
 stateMixin(Vue)
 eventsMixin(Vue)
+// prototype挂载_update,$forceUpdate
 lifecycleMixin(Vue)
 renderMixin(Vue)
 

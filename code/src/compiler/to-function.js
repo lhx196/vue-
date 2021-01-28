@@ -9,7 +9,7 @@ type CompiledFunctionResult = {
   staticRenderFns: Array<Function>;
 };
 
-function createFunction (code, errors) {
+function createFunction(code, errors) {
   try {
     return new Function(code)
   } catch (err) {
