@@ -12,7 +12,6 @@ if (process.env.NODE_ENV !== 'production') {
     'Math,Number,Date,Array,Object,Boolean,String,RegExp,Map,Set,JSON,Intl,' +
     'require' // for Webpack/Browserify
   )
-    console.log(allowedGlobals)
   const warnNonPresent = (target, key) => {
     warn(
       `Property or method "${key}" is not defined on the instance but ` +
@@ -53,6 +52,7 @@ if (process.env.NODE_ENV !== 'production') {
     })
   }
 
+  // 拦截 in 操作符 添加警告操作
   const hasHandler = {
     has (target, key) {
       const has = key in target

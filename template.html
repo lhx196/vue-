@@ -50,12 +50,18 @@
     });
   </script>
   <script>
-    // console.log('===========================')
-    // var a = { b: 123 };
-    // (function () {
-    //   with (a) {
-    //     return `${b}`;
+    // console.log('===========================1')
+    // var a  = {b:111,g:222}
+    // var handler = {
+    //   has(target,key){
+    //     console.log(target,key)
+    //     return true
     //   }
-    // })();
+    // }
+    // var c = new Proxy(a,handler)
+    // console.log('b' in c)
+    // // for(let q in c){
+    //   console.log(q)
+    // }
   </script>
 </html>
