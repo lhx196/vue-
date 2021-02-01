@@ -29,7 +29,12 @@ export function initRender (vm: Component) {
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
   // 提取createElement 函数
-  vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
+  // vue 实例 tag data children ...
+  vm._c = (a, b, c, d) => {
+    // console.log(arguments)
+    // console.log(a,b,c,d)
+    return createElement(vm, a, b, c, d, false)
+  }
   // normalization is always applied for the public version, used in
   // user-written render functions.
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
@@ -92,9 +97,13 @@ export function renderMixin (Vue: Class<Component>) {
       currentRenderingInstance = vm
 
       // _renderProxy拦截 in 操作符，如果读取的不符合条件则警告
+      // redner执行顺序，由于js的执行顺序，最外成根元素_c在执行之前会先把参数里面的参数先执行完毕从里到外，
+      // 因此render.call执行时会遵循深度优先原则
+      // 从chidren第一个子元素最里层开始往外，再往下一个执行
       console.log(render)
+      // console.log(vm)
       vnode = render.call(vm._renderProxy, vm.$createElement)
-      console.log(vnode)
+      // console.log(vnode)
     } catch (e) {
       handleError(e, vm, `render`)
       // return error render result,

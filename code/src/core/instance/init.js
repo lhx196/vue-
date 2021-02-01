@@ -62,7 +62,8 @@ export function initMixin(Vue: Class<Component>) {
 
      /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
-      initProxy(vm)
+      // initProxy(vm)
+      vm._renderProxy = vm
     } else {
       vm._renderProxy = vm
     }
