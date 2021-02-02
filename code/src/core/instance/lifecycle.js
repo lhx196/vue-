@@ -172,8 +172,9 @@ export function mountComponent (
   callHook(vm, 'beforeMount')
 
   let updateComponent
-  /* istanbul ignore if */
+/* istanbul ignore if */
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+    
     updateComponent = () => {
       const name = vm._name
       const id = vm._uid
@@ -194,14 +195,21 @@ export function mountComponent (
     // vm._render()得到一份最新的VNode节点树，
     // 然后执行vm._update()方法对最新的VNode节点树与上一次渲染的旧VNode节点树进行对比并更新DOM节点(即patch操作) ，完成一次渲染。
     updateComponent = () => {
+      // console.log(hydrating)
+      // 实际render执行时返回vnode; vm._update(vnode, hydrating)
       vm._update(vm._render(), hydrating)
     }
   }
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  // console.log(noop)
+  // noop
+  // 不执行操作的空函数
+  // 抓要是为了兼容那些需要函数作为参数的函数，有没有可做的操作时用的
   new Watcher(vm, updateComponent, noop, {
-    before () {
+    before() {
+      // mount后，再次更新时才会执行beforeUpdate钩子
       if (vm._isMounted && !vm._isDestroyed) {
         callHook(vm, 'beforeUpdate')
       }

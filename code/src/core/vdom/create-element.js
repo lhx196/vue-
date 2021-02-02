@@ -126,12 +126,13 @@ export function _createElement (
    * 则直接创建一个普通 VNode，如果是为已注册的组件名，则通过 createComponent 创建一个组件类型的 VNode，
    * 否则创建一个未知的标签的 VNode。 如果是 tag 一个 Component 类型，
    * 则直接调用 createComponent 创建一个组件类型的 VNode 节点。对于 createComponent 创建组件类型的 VNode 的过程，
-   * 我们之后会去介绍，本质上它还是返回了一个 VNode。
+   * 本质上它还是返回了一个 VNode。
    */
   let vnode, ns
   if (typeof tag === 'string') {
     let Ctor
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
+    // 正常标签
     if (config.isReservedTag(tag)) {
       // platform built-in elements
       if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.nativeOn)) {
@@ -144,9 +145,11 @@ export function _createElement (
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
+    // 判断是否component中含有注册的标签
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
       vnode = createComponent(Ctor, data, context, children, tag)
+    // 未曾识别的标签vnode
     } else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
