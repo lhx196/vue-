@@ -126,7 +126,7 @@ export function renderMixin (Vue: Class<Component>) {
     if (Array.isArray(vnode) && vnode.length === 1) {
       vnode = vnode[0]
     }
-    console.log(vnode)
+    // console.log(vnode)
     // return empty vnode in case the render function errored out
     if (!(vnode instanceof VNode)) {
       if (process.env.NODE_ENV !== 'production' && Array.isArray(vnode)) {

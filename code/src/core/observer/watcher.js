@@ -44,6 +44,7 @@ export default class Watcher {
 
   constructor (
     vm: Component,
+    // 在mountComponent中为updateComponent
     expOrFn: string | Function,
     cb: Function,
     options?: ?Object,
@@ -77,6 +78,7 @@ export default class Watcher {
       : ''
     // parse expression for getter
     if (typeof expOrFn === 'function') {
+      // 在mountComponent中为updateComponent 
       this.getter = expOrFn
     } else {
       this.getter = parsePath(expOrFn)
@@ -90,6 +92,7 @@ export default class Watcher {
         )
       }
     }
+    // 执行get
     this.value = this.lazy
       ? undefined
       : this.get()
@@ -98,6 +101,7 @@ export default class Watcher {
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
+  // 执行getter 即为updateComponent 生成vnode 在执行_update
   get () {
     pushTarget(this)
     let value

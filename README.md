@@ -35,7 +35,7 @@ renderMixin(Vue)
   1、import Vue from './runtime/index'，引入Vue构造函数，Vue构造函数在runtime文件中复制了$mount，runtime中import Vue from 'core/index'表示vue核心代码再core/index中<br>
   2、entry-runtime-with-compiler中会把runtime的赋值的$mount抽离出来，并在原先$mount执行前添加两步逻辑，一是根据dom操作或者模板字符串，二是用模板字符串获取渲染函数render及静态跟渲染函数数组(此时的渲染函数已经经过new Function生成anonymous function(匿名函数),下方会提及生成过程)<br>
 
-## 初始化init 过程
+# 初始化init 过程
  - 合并option(mergeOptions合并Vue构造函数的option 与 new Vue过程中option配置项)
  - initLifecycle 初始化生命周期函数
  - initEvents 创建事件对象???父元素传递的自定义事件(暂未深入)
@@ -332,6 +332,14 @@ with的作用在于，在后面执行函数code的时候，可以直接读取thi
 
 ## mountComponent
 - 1、callHook(vm, 'beforeMount') beforeMount钩子函数触发
+- 2、声明updateComponent更新函数：vm._update(vm._render(), hydrating)：
+```text
+(1) _render为在generate生成的可执行函数
+(2) 在执行的过程会，会执行数组中个个字节的_c生成函数，因此最终该函数的执行结果为生成一个数状结构的vnode
+```
+- 3、创建Watcher实例，将updateComponent挂载到watch上，并设置before函数(beforeUpdate生命周期函数),在watch实例化的过程中会执行一次updateComponent
+- 4、触发mounted钩子函数<br>
+-----------------------------------至此初始化过程结束---------------------------------------------------
 
 ## observer模块
 

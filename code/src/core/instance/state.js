@@ -152,6 +152,7 @@ function initData (vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
+      // 代理 将vm上的属性代理的data上 即可通过vm实例直接访问到data属性。而不需要vm.data.属性的形式
       proxy(vm, `_data`, key)
     }
   }
