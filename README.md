@@ -340,8 +340,9 @@ with的作用在于，在后面执行函数code的时候，可以直接读取thi
 - 3、创建Watcher实例，将updateComponent挂载到watch上，并设置before函数(beforeUpdate生命周期函数),在watch实例化的过程中会执行一次updateComponent
 - 4、触发mounted钩子函数<br>
 -----------------------------------至此初始化过程结束---------------------------------------------------
+# 响应式原理
 
-## observer模块
+### observer模块
 
 observer模块在Vue项目中的代码位置是src/core/observer，模块共分为这几个部分：
 
@@ -372,6 +373,64 @@ constructor (value: any) {
   }
 }
 ```
+- 创建一个new Dep实例dep，每一个观察类都会拥有一个独立的dep实例，在vue响应式过程中就是通过dep实例 来进行订阅与发布数据更新
+- def函数 会为value(即new Observer()中的引用属性) 添加__ob__  属性，值为Oberver实例，并且通过defineProperty设置访问器属性
+- 判断数组是否数组，如果是数组会进行以下处理
+```javascript
+copyAugment(value, arrayMethods, arrayKeys)
+// 
+function copyAugment (target: Object, src: Object, keys: Array<string>) {
+  for (let i = 0, l = keys.length; i < l; i++) {
+    const key = keys[i]
+    def(target, key, src[key])
+  }
+}
+// array.js
+const methodsToPatch = [
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'splice',
+  'sort',
+  'reverse'
+]
+
+/**
+ * Intercept mutating methods and emit events
+ */
+methodsToPatch.forEach(function (method) {
+  // cache original method
+  const original = arrayProto[method]
+  def(arrayMethods, method, function mutator (...args) {
+    const result = original.apply(this, args)
+    const ob = this.__ob__
+    let inserted
+    switch (method) {
+      case 'push':
+      case 'unshift':
+        inserted = args
+        break
+      case 'splice':
+        inserted = args.slice(2)
+        break
+    }
+    if (inserted) ob.observeArray(inserted)
+    // notify change
+    ob.dep.notify()
+    return result
+  })
+})
+```
+```text
+1、通过重写上述的数组的方法，在执行上述数组操作是会触发dep.notify 即任务派发，通知数据层已经更新
+2、执行observeArray。即为每个array中的元素调用一次observer方法，数组元素为引用类型的元素也可以得到监听，进行递归，若为基本数据类型，会在observer执行过程中直接返回(observer 实际上就是为每一个引用类型的每个属性添加访问器属性)
+3、执行walk方法。walk实际过程即是为对象中的所有属性都调用defineReactive进行处理
+4-1、defineReactive处理过程：为对象中的每个属性都创建一个dep实例；let childOb = !shallow && observe(val) 若属性是应用类型，则会递归调用obeserve方法；Object.defineProperty给属性添加get set方法（所有数据类型都会添加，不区分基本和引用类型）
+4-2、get:如果本身属性就已经复制了get方法，则会声明getter变量存储起来，在get中去调用getter方法，防止之前设置的访问器属性丢失；调用当前4-1时新增的dep实例 调用订阅的方法；因为在render过程中，会调用已经有ast语法树转化的执行函数去生成vnode，因此在生成的vnode过程中会有一个读取data数据中属性的过重，因此在get中订阅，可以保证需要更新到视图上的data可以准确的添加订阅;
+4-3、set:如果value是应用类型，调用observe方法 添加监听；dep.notify调用通知视图更新，在data更新的时候会告诉dep，让dep派发任务通知view层更新渲染
+```
+
 value是需要被观察的数据对象，在构造函数中，会给value增加__ob__属性，作为数据已经被Observer观察的标志。如果value是数组，就使用observeArray遍历value，对value中每一个元素调用observe分别进行观察。如果value是对象，则使用walk遍历value上每个key，对每个key调用defineReactive来获得该key的set/get控制权。<br>
 
 解释下上面用到的几个函数的功能：
@@ -463,13 +522,16 @@ watcher实例上有这些方法：
 - teardown: 去除当前watcher实例所有的订阅
 
 ## initState过程
+```text
+  在init过程中，会触发initstate过程，initState 方法主要是对 props、methods、data、computed 和 wathcer 等属性做了初始化操作。这里我们重点分析 props 和 data，对于其它属性的初始化我们之后再详细分析
+    1、props 的初始化主要过程，就是遍历定义的 props 配置。遍历的过程主要做两件事情：一个是调用 defineReactive 方法把每个 prop 对应的值变成响应式，可以通过 vm._props.xxx 访问到定义 props 中对应的属性。对于 defineReactive 方法，我们稍后会介绍；另一个是通过 proxy 把 vm._props.xxx 的访问代理到 vm.xxx 上；
+    2、data 的初始化主要过程也是做两件事，一个是对定义 data 函数返回对象的遍历，通过 proxy 把每一个值 vm._data.xxx 都代理到 vm.xxx 上；另一个是调用 observe 方法观测整个 data 的变化，把 data 也变成响应式，可以通过 vm._data.xxx 访问到定义 data 返回函数中对应的属性，observe 我们稍后会介绍。
+```
 
 - initData
 ```text
-    1、获取options中配置的data属性(对象或者函数)，通过调用observe(data)方法创建
-    2、observe方法内部主要包含new Observer() 创建数据被观察者类
-
-    
+  1、options.data上的值代理到实例vm上，可让vm直接访问到data上的值
+  2、调用observe(data)：通过new Observe创建 引用类型 的实例
 ```
 
 ## parse-html要点

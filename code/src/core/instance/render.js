@@ -100,7 +100,7 @@ export function renderMixin (Vue: Class<Component>) {
       // redner执行顺序，由于js的执行顺序，最外成根元素_c在执行之前会先把参数里面的参数先执行完毕从里到外，
       // 因此render.call执行时会遵循深度优先原则
       // 从chidren第一个子元素最里层开始往外，再往下一个执行
-      console.log(render)
+      // console.log(render)
       // console.log(vm)
       vnode = render.call(vm._renderProxy, vm.$createElement)
       // console.log(vnode)

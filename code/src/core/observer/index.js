@@ -43,6 +43,7 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    // 为value 新增 _ob_属性 值为 this 并添加访问器属性
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
       if (hasProto) {
@@ -124,6 +125,7 @@ export function observe(value: any, asRootData: ?boolean): Observer | void {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // console.log(value)
     ob = new Observer(value)
   }
   if (asRootData && ob) {

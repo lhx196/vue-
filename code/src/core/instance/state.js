@@ -165,6 +165,7 @@ function initData (vm: Component) {
       defineReactive 内部会对该设置属性作判定，如果是对象的，则会为该对象new Oberver作递归并为当前属性对象添加get set(因为对象整体替换也需要监听修改模板)，如果不是对象，那直接添加get set方法
   */
   observe(data, true /* asRootData */)
+  console.log(data)
 }
 
 export function getData (data: Function, vm: Component): any {
