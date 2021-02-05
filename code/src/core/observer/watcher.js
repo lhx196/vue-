@@ -42,7 +42,8 @@ export default class Watcher {
   getter: Function;
   value: any;
 
-  constructor (
+  constructor(
+    // vue实例
     vm: Component,
     // 在mountComponent中为updateComponent
     expOrFn: string | Function,
@@ -50,6 +51,8 @@ export default class Watcher {
     options?: ?Object,
     isRenderWatcher?: boolean
   ) {
+    // console.log(arguments)
+    // console.log(expOrFn)
     this.vm = vm
     if (isRenderWatcher) {
       vm._watcher = this
@@ -102,11 +105,13 @@ export default class Watcher {
    * Evaluate the getter, and re-collect dependencies.
    */
   // 执行getter 即为updateComponent 生成vnode 在执行_update
-  get () {
+  get() {
+    // 将当前Watcher实例推入栈中
     pushTarget(this)
     let value
     const vm = this.vm
     try {
+      // updateComponent 生成vnode
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -120,6 +125,7 @@ export default class Watcher {
       if (this.deep) {
         traverse(value)
       }
+      // 出栈
       popTarget()
       this.cleanupDeps()
     }

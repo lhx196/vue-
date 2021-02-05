@@ -175,6 +175,7 @@ export function defineReactive (
       if (Dep.target) {
         dep.depend()
         // 如果监听的属性是对象
+        // console.log(childOb)
         if (childOb) {
           childOb.dep.depend()
           if (Array.isArray(value)) {

@@ -337,11 +337,11 @@ with的作用在于，在后面执行函数code的时候，可以直接读取thi
 (1) _render为在generate生成的可执行函数
 (2) 在执行的过程会，会执行数组中个个字节的_c生成函数，因此最终该函数的执行结果为生成一个数状结构的vnode
 ```
-- 3、创建Watcher实例，将updateComponent挂载到watch上，并设置before函数(beforeUpdate生命周期函数),在watch实例化的过程中会执行一次updateComponent
+- 3、创建渲染Watcher实例，将updateComponent挂载到watch上，并设置before函数(beforeUpdate生命周期函数),在watch实例化的过程中会执行一次updateComponent(详细可看Watcher介绍)
 - 4、触发mounted钩子函数<br>
 -----------------------------------至此初始化过程结束---------------------------------------------------
 # 响应式原理
-
+在写响应式原理前首先了解核心的三个类:Observer  Watcher Dep
 ### observer模块
 
 observer模块在Vue项目中的代码位置是src/core/observer，模块共分为这几个部分：
@@ -525,14 +525,13 @@ watcher实例上有这些方法：
 ```text
   在init过程中，会触发initstate过程，initState 方法主要是对 props、methods、data、computed 和 wathcer 等属性做了初始化操作。这里我们重点分析 props 和 data，对于其它属性的初始化我们之后再详细分析
     1、props 的初始化主要过程，就是遍历定义的 props 配置。遍历的过程主要做两件事情：一个是调用 defineReactive 方法把每个 prop 对应的值变成响应式，可以通过 vm._props.xxx 访问到定义 props 中对应的属性。对于 defineReactive 方法，我们稍后会介绍；另一个是通过 proxy 把 vm._props.xxx 的访问代理到 vm.xxx 上；
-    2、data 的初始化主要过程也是做两件事，一个是对定义 data 函数返回对象的遍历，通过 proxy 把每一个值 vm._data.xxx 都代理到 vm.xxx 上；另一个是调用 observe 方法观测整个 data 的变化，把 data 也变成响应式，可以通过 vm._data.xxx 访问到定义 data 返回函数中对应的属性，observe 我们稍后会介绍。
+    2、data 的初始化主要过程也是做两件事，一个是对定义 data 函数返回对象的遍历，通过 proxy 把每一个值 vm._data.xxx 都代理到 vm.xxx 上；另一个是调用 observe 方法观测整个 data 的变化，把 data 也变成响应式，可以通过 vm._data.xxx 访问到定义 data 返回函数中对应的属性，observe
 ```
-
-- initData
-```text
-  1、options.data上的值代理到实例vm上，可让vm直接访问到data上的值
-  2、调用observe(data)：通过new Observe创建 引用类型 的实例
-```
+## initData(data的响应式流程原理 -- mvc)
+- 通过observer函数，为data里面的所有属性进行递归遍历，并生成对应的依赖类dep,若属性是数组会从写数组更新的方法，后续执行defineReactive，为每个属性添加get/set访问器属性和生成独立的依赖类dep；
+- 在初始化的过程中，mountComponent中生成一个渲染Watcher，该Watcher的get方法是_render生成vnode 再执行update更新视图
+- 在初次渲染时，会获取data上的属性，并触发get访问器，此时会往依赖类dep添加渲染Watcher监听；
+- 在data发生修改时 get方法会执行dep的notify方法，执行订阅队列中的渲染Watcer中的更新方法，更新方法会生成新的Vnode，patch新旧vnode后再更新视图
 
 ## parse-html要点
 ```text

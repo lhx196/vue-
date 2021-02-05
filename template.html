@@ -8,7 +8,7 @@
   <body>
     <div id="app">
       <div value="valuetext" data-num="numbertext" @click="FunA">
-        {{bbb}}555
+        {{bbb}} {{aaa.b}}
       </div>
       <div>
         text1
@@ -35,13 +35,12 @@
       data: {
         aaa: { b: "a123" },
         bbb: "b123",
-        bool: 2,
         arr: [1, 2, 3, 4],
       },
       mounted() {
-        setTimeout(() => {
-          this.bbb = "666";
-        }, 1000);
+        // setTimeout(() => {
+        //   this.bbb = "666";
+        // }, 1000);
       },
       methods: {
         FunA() {
