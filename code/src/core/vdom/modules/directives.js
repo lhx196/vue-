@@ -12,7 +12,8 @@ export default {
   }
 }
 
-function updateDirectives (oldVnode: VNodeWithData, vnode: VNodeWithData) {
+function updateDirectives(oldVnode: VNodeWithData, vnode: VNodeWithData) {
+  // console.log(vnode.data.directives)
   if (oldVnode.data.directives || vnode.data.directives) {
     _update(oldVnode, vnode)
   }

@@ -177,7 +177,9 @@ export function defineReactive (
         // 如果监听的属性是对象
         // console.log(childOb)
         if (childOb) {
+          // 在读取属性，若属性也是应用类型存在childOb，那在子属性图依赖数组dep中中也需要添加当前父属性节点，让免子属性变化时也通知副属性
           childOb.dep.depend()
+
           if (Array.isArray(value)) {
             dependArray(value)
           }

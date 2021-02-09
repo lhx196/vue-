@@ -31,7 +31,7 @@ export function setActiveInstance(vm: Component) {
 
 export function initLifecycle (vm: Component) {
   const options = vm.$options
-  console.log('------------------initLifecycle')
+  // console.log('------------------initLifecycle')
   // console.log(options)
   // locate first non-abstract parent
   let parent = options.parent
@@ -64,11 +64,14 @@ export function lifecycleMixin (Vue: Class<Component>) {
     const vm: Component = this
     const prevEl = vm.$el
     const prevVnode = vm._vnode
+    // console.log(prevVnode)
+    // 设置当前vm实例为获取实例 返回一个复原vm实例的闭包方法
     const restoreActiveInstance = setActiveInstance(vm)
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
     if (!prevVnode) {
+      // 初始render
       // initial render
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {

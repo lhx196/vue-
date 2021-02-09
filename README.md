@@ -441,14 +441,14 @@ value是需要被观察的数据对象，在构造函数中，会给value增加_
 
 - walk: 遍历对象的每个key，对对象上每个key的数据调用defineReactive
 
-- defineReactive: 通过Object.defineProperty设置对象的key属性，使得能够捕获到该属性值的set/get动作。一般是由Watcher的实例对象进行get操作，此时Watcher的实例对象将被自动添加到Dep实例的依赖数组中，在外部操作触发了set时，将通过Dep实例的notify来通知所有依赖的watcher进行更新。
+- defineReactive: 通过Object.defineProperty设置对象的key属性，使得能够捕获到该属性值的set/get动作。一般是由Watcher的实例对象进行get操作，此时Watcher的实例对象将被自动添加到Dep实例的依赖数组中，在外部操作触发了set时，将通过Dep实例的notify来通知所有依赖的watcher进行更新。let childOb = !shallow && observe(val) - 若有该属性是应用类型，则会继续调用observe进行深度递归；childOb.dep.depend() - 在读取属性，若属性也是应用类型存在childOb，那在子属性图依赖数组dep中中也需要添加当前父属性节点，让免子属性变化时也通知副属性
 
 ### Dep
 Dep是Observer与Watcher之间的纽带，也可以认为Dep是服务于Observer的订阅系统。Watcher订阅某个Observer的Dep，当Observer观察的数据发生变化时，通过Dep通知各个已经订阅的Watcher。<br>
 
 Dep提供了几个接口：
 
-- addSub: 接收的参数为Watcher实例，并把Watcher实例存入记录依赖的数组中
+- addSub: 接收的参数为Watcher实例，并把Watcher实例存入记录依赖的数组中(其中newDepIds为set数据结构，再添加之前会有has判断避免重复添加依赖)
 
 - removeSub: 与addSub对应，作用是将Watcher实例从记录依赖的数组中移除
 
@@ -510,6 +510,16 @@ watcher实例上有这些方法：
 - addDep: 接收参数dep(Dep实例)，让当前watcher订阅dep
 
 - cleanupDeps: 清除newDepIds和newDep上记录的对dep的订阅信息
+```text
+在执行 cleanupDeps 函数的时候，会首先遍历 deps，移除对 dep.subs 数组中 Wathcer 的订阅，然后把 newDepIds 和 depIds 交换，newDeps 和 deps 交换，并把 newDepIds 和 newDeps 清空。
+
+那么为什么需要做 deps 订阅的移除呢，在添加 deps 的订阅过程，已经能通过 id 去重避免重复订阅了。
+
+考虑到一种场景，我们的模板会根据 v-if 去渲染不同子模板 a 和 b，当我们满足某种条件的时候渲染 a 的时候，会访问到 a 中的数据，这时候我们对 a 使用的数据添加了 getter，做了依赖收集，那么当我们去修改 a 的数据的时候，理应通知到这些订阅者。那么如果我们一旦改变了条件渲染了 b 模板，又会对 b 使用的数据添加了 getter，如果我们没有依赖移除的过程，那么这时候我去修改 a 模板的数据，会通知 a 数据的订阅的回调，这显然是有浪费的。
+
+因此 Vue 设计了在每次添加完新的订阅，会移除掉旧的订阅，这样就保证了在我们刚才的场景中，如果渲染 b 模板的时候去修改 a 模板的数据，a 数据订阅回调已经被移除了，所以不会有任何浪费，真的是非常赞叹 Vue 对一些细节上的处理。
+
+```
 
 - update: 立刻运行watcher或者将watcher加入队列中等待统一flush
 
@@ -546,4 +556,4 @@ watcher实例上有这些方法：
 - vue.js技术揭秘[https://ustbhuangyi.github.io/vue-analysis]
 - Vue原理解析之observer模块[https://segmentfault.com/a/1190000008377887]
 - Vue中文社区[https://vue-js.com/learn-vue/start/]
-
+- Vue源码学习[https://blog.windstone.cc/vue/source-study/vdom/topics/dom-binding.html]

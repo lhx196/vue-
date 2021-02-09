@@ -135,8 +135,10 @@ export default class Watcher {
   /**
    * Add a dependency to this directive.
    */
-  addDep (dep: Dep) {
+  addDep(dep: Dep) {
+    // 避免重复订阅
     const id = dep.id
+    // console.log(id)
     if (!this.newDepIds.has(id)) {
       this.newDepIds.add(id)
       this.newDeps.push(dep)
