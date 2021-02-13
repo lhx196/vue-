@@ -206,13 +206,11 @@ export function createPatchFunction (backend) {
         createChildren(vnode, children, insertedVnodeQueue)
         if (isDef(data)) {
           // data -- {"attrs":{"value":"valuetext","data-num":"numbertext"},"on":{}}
-          // console.log(JSON.stringify(data))
+          console.log(JSON.stringify(data))
           // 属性、事件的绑定及指令处理(for、if)
           // 如果data.hook存在 则会push到insertedVnodeQueue队列中
-          // console.log(insertedVnodeQueue)
+          // 循环执行cbs函数组
           invokeCreateHooks(vnode, insertedVnodeQueue)
-          // console.log(vnode.elm)
-          // console.log(cbs)
         }
         // console.log(refElm)
         // 往父节点插入子节点
@@ -335,7 +333,7 @@ export function createPatchFunction (backend) {
     }
     return isDef(vnode.tag)
   }
-
+ 
   function invokeCreateHooks(vnode, insertedVnodeQueue) {
     // cbs为create update destroy这些过程所需要的执行的函数集合
     // 循环执行
@@ -741,7 +739,7 @@ export function createPatchFunction (backend) {
   /**
    * oldVnode 表示旧的 VNode 节点
    * vnode 表示执行 _render 后返回的 VNode 的节点
-   * hydrating 表示是否是服务端渲染
+   * hydrating 表示是否是服务端渲染 
    */
   return function patch(oldVnode, vnode, hydrating, removeOnly) {
     // isUndef判断vnode为null或undefined

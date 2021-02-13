@@ -133,7 +133,7 @@ export function observe(value: any, asRootData: ?boolean): Observer | void {
   }
   return ob
 }
-
+ 
 /**
  * Define a reactive property on an Object.
  * 将数据处理成响应式数据Object.defineProperty 设置set get

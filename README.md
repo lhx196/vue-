@@ -187,6 +187,16 @@ parsehtml实际执行是循环遍历html模板字符串，通过advance api来�
 
 当不以<开头，则为文本字符串处理。<br>
 3、根据上述判断方式去执行对应的钩子函数，开始标签 -- options.starts，结束标签 -- options.end，文本标签执行chars
+
+## parse-html要点
+```text
+ 在解析标签过程中 使用到入栈思路:
+ 1、在解析过程中首先会剔除单标签
+ 2、剩余标签都是配对存在的，遵循先进后出的规则
+ 3、在匹配到符合开始标签时，就会把该标签压入栈中
+ 4、遇到结束标签时，从依次往里检索，匹配到就出栈
+```
+
 ```text
 钩子很函数的执行过程
   start：
@@ -535,21 +545,57 @@ watcher实例上有这些方法：
 ```text
   在init过程中，会触发initstate过程，initState 方法主要是对 props、methods、data、computed 和 wathcer 等属性做了初始化操作。这里我们重点分析 props 和 data，对于其它属性的初始化我们之后再详细分析
     1、props 的初始化主要过程，就是遍历定义的 props 配置。遍历的过程主要做两件事情：一个是调用 defineReactive 方法把每个 prop 对应的值变成响应式，可以通过 vm._props.xxx 访问到定义 props 中对应的属性。对于 defineReactive 方法，我们稍后会介绍；另一个是通过 proxy 把 vm._props.xxx 的访问代理到 vm.xxx 上；
-    2、data 的初始化主要过程也是做两件事，一个是对定义 data 函数返回对象的遍历，通过 proxy 把每一个值 vm._data.xxx 都代理到 vm.xxx 上；另一个是调用 observe 方法观测整个 data 的变化，把 data 也变成响应式，可以通过 vm._data.xxx 访问到定义 data 返回函数中对应的属性，observe
+    2、data 的初始化主要过程也是做两件事，一个是对定义 data 函数返回对象的遍历，通过 proxy 把每一个值 vm._data.xxx 都代理到 vm.xxx 上；另一个是调用 observe 方法观测整个 data 的变化，把 data 也变成响应式，可以通过 vm._data.xxx 访问到定义 data 返回函数中对应的属性
 ```
 ## initData(data的响应式流程原理 -- mvc)
 - 通过observer函数，为data里面的所有属性进行递归遍历，并生成对应的依赖类dep,若属性是数组会从写数组更新的方法，后续执行defineReactive，为每个属性添加get/set访问器属性和生成独立的依赖类dep；
-- 在初始化的过程中，mountComponent中生成一个渲染Watcher，该Watcher的get方法是_render生成vnode 再执行update更新视图
-- 在初次渲染时，会获取data上的属性，并触发get访问器，此时会往依赖类dep添加渲染Watcher监听；
-- 在data发生修改时 get方法会执行dep的notify方法，执行订阅队列中的渲染Watcer中的更新方法，更新方法会生成新的Vnode，patch新旧vnode后再更新视图
+- 在初始化的过程中，mountComponent中生成一个渲染Watcher，该Watcher会把vm._update(vm._render(), hydrating)闭包函数挂载到watcher的get属性上。
+- 在实例化的过程中通过pushTarget 将当前Dep.target设置为实例渲染Wather，然后再调用vm._update(vm._render(), hydrating)闭包开始渲染界面。
+- 在渲染界面的过程中，_render在生成vnode过程中读取到data里面的属性，此时会触发defineReactive过程设置的get访问器属性，get中有if (Dep.target) { dep.depend() }的判断。因此在下方中可以看到get过程会调用渲染watcher实例的addDep方法。addDep的执行过程实际是将当前watcher 塞入到this(即每一个访问器属性都会拥有一个专属dep)当前属性的专属dep订阅队列中。
+```javascript
+ depend() {
+    if (Dep.target) {
+      // 执行watcher addDep
+      Dep.target.addDep(this)
+    }
+  }
+```
+- 后续data发生改变，触发set访问器属性时，执行dep订阅集合中的渲染watcher函数，就会触发update的操作
 
-## parse-html要点
+
+<br>
+
+-----------------------------------响应式原理分割线---------------------------------------------------
+
+# 视图初始化及更新过程
+
+## 视图渲染
+- 上方提到，在渲染watcher生成过程中，会把vm._update(vm._render(), hydrating)该闭包以参数形式传递进去，在_render执行过后，已经得到由当前最新data所生成的vnode虚拟dom。
+```javascript
+if (!prevVnode) {
+  // initial render
+  vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */);
+} else {
+  // updates
+  vm.$el = vm.__patch__(prevVnode, vnode);
+}
+```
+- 在update中 实际更新操作是通过patch进行的并分为是否初始化
+
+## 初始化
+- 在首次渲染时，实际上主要是依靠patch中的createElm进行
+- createElm分为下方三个逻辑
 ```text
- 在解析标签过程中 使用到入栈思路:
- 1、在解析过程中首先会剔除单标签
- 2、剩余标签都是配对存在的，遵循先进后出的规则
- 3、在匹配到符合开始标签时，就会把该标签压入栈中
- 4、遇到结束标签时，从依次往里检索，匹配到就出栈
+1、当vnode的tag存在时：
+  此时先调用vnode.elm = vnode.ns ? nodeOps.createElementNS(vnode.ns, tag) : nodeOps.createElement(tag, vnode);按照vnode上放的tag属性，生成对应的dom节点，此时的dom节点并没有绑定属性事件等。
+  其次执行setScope(vnode);设置属性style作用域。
+  下一步通过createChildren，遍历子节点递归调用createElm。因此createElm满足深度优先遍历方式。
+  接下来根据data判断，此时data形式如下{"attrs":{"value":"valuetext","data-num":"numbertext"},"on":{}}。然后通过循环调用cbs的处理函数集合，以此把属性及事件绑定到当前生成的元素节点中。cbs是一个key为执行过程表示，如：create、destory等，value是每个执行过程以此需要进行处理的函数数组集合。在createPatchFunction闭包中加载。
+  最后通过insert函数插入到父元素上。(refElm用做是否插入到某个兄弟节点之前，在diff过程后进行变化时用得上)
+2、判断isTrue(vnode.isComment)
+  判断是否为注释节点并通过insert插入
+3、判断是否为文本节点。创建文本元素并插入到父节点中
+  
 ```
 
 ### 参考文献
