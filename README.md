@@ -603,3 +603,4 @@ if (!prevVnode) {
 - Vue原理解析之observer模块[https://segmentfault.com/a/1190000008377887]
 - Vue中文社区[https://vue-js.com/learn-vue/start/]
 - Vue源码学习[https://blog.windstone.cc/vue/source-study/vdom/topics/dom-binding.html]
+- Vue源码分析[https://wuner.gitee.io/wuner-notes/fed-e-task-03-02/notes/w-002-vue-virtual-dom-resolve/]

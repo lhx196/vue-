@@ -752,22 +752,30 @@ export function createPatchFunction (backend) {
     let isInitialPatch = false
     const insertedVnodeQueue = []
     // console.log(oldVnode)
+    // 如果旧的虚拟节点不存在
     if (isUndef(oldVnode)) {
       // 首次创建
       // empty mount (likely as component), create new root element
+      // 标记当前虚拟节点已创建，只存储在内存中，未挂载到DOM树上
       isInitialPatch = true
+      // 将新的虚拟节点转换为真实DOM
       createElm(vnode, insertedVnodeQueue)
     } else {
+      // 如果存在nodeType，则是真实DOM
       const isRealElement = isDef(oldVnode.nodeType)
-      // console.log(oldVnode)
+      // 如果不是真实DOM，并且新旧虚拟节点相同
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
         // patch existing root node
+        // 调用patchVnode，通过diff算法，对比新旧节点的差异，并更新
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
       } else {
+      // 否则
+      // 如果是真实DOM
         if (isRealElement) {
           // mounting to a real element
           // check if this is server-rendered content and if we can perform
           // a successful hydration.
+          // 如果是元素节点，并且该节点存在data-server-rendered属性
           if (oldVnode.nodeType === 1 && oldVnode.hasAttribute(SSR_ATTR)) {
             oldVnode.removeAttribute(SSR_ATTR)
             hydrating = true
@@ -788,13 +796,16 @@ export function createPatchFunction (backend) {
           }
           // either not server-rendered, or hydration failed.
           // create an empty node and replace it
+          // 将真实DOM转换为虚拟节点并赋值给旧的虚拟节点
           oldVnode = emptyNodeAt(oldVnode)
         }
 
         // replacing existing element
+        // 获取旧的虚拟节点的真实DOM元素
         const oldElm = oldVnode.elm
+        // 获取旧的虚拟节点的父元素节点
         const parentElm = nodeOps.parentNode(oldElm)
-
+        // 调用createElm方法将新的虚拟节点转换为真实DOM，并挂载到旧的虚拟节点的父元素节点上
         // create new node
         createElm(
           vnode,
