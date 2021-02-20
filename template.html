@@ -14,7 +14,10 @@
       <div v-else>else</div> -->
     <div id="app">
       <div value="valuetext" data-num="numbertext" @click="FunA">
-        {{bbb}} {{aaa.b}}
+        {{bbb}}
+        <span>{{ddd}}</span>
+        <span>{{aaa.b}}</span>
+        <span>text</span>
       </div>
       <!-- <div>
         <span>text2</span>
@@ -22,6 +25,7 @@
       <div>{{bbb}}</div> -->
       <!-- <div></div> -->
     </div>
+    <div>123</div>  
   </body>
   <script src="./code/dist/vue.js"></script>
   <!-- <script src="./code/src/core/index.js"></script> -->
@@ -36,11 +40,12 @@
         aaa: { b: "a123" },
         bbb: "b123",
         arr: [1, 2, 3, 4],
+        ddd:444
       },
       mounted() {
-        // setTimeout(() => {
-        //   this.bbb = "666";
-        // }, 1000);
+        setTimeout(() => {
+          this.bbb = "666";
+        }, 1000);
       },
       methods: {
         FunA() {
