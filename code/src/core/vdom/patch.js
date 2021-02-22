@@ -459,8 +459,8 @@ export function createPatchFunction (backend) {
     // newChildren中所有未处理节点中的最后一个
     let newEndVnode = newCh[newEndIdx]
     let oldKeyToIdx, idxInOld, vnodeToMove, refElm
-    console.log(oldCh)
-    console.log(newCh)
+    // console.log(oldCh)
+    // console.log(newCh)
 
     // removeOnly is a special flag used only by <transition-group>
     // to ensure removed elements stay in correct relative positions
@@ -487,7 +487,7 @@ export function createPatchFunction (backend) {
         oldStartVnode = oldCh[++oldStartIdx]
         newStartVnode = newCh[++newStartIdx]
       } else if (sameVnode(oldEndVnode, newEndVnode)) {
-        // 如果新后与旧前节点相同，先把两个节点进行patch更新，然后把旧前节点移动到oldChilren中所有未处理节点之后
+        // 如果新后与旧前节点相同，就把两个节点进行patch更新
         patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue, newCh, newEndIdx)
         oldEndVnode = oldCh[--oldEndIdx]
         newEndVnode = newCh[--newEndIdx]
